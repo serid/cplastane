@@ -12,6 +12,10 @@ namespace assembly {
                 Ebx,
                 Ecx,
                 Edx,
+                Rax,
+                Rbx,
+                Rcx,
+                Rdx,
             };
 
             enum class tag_t {
@@ -37,6 +41,14 @@ namespace assembly {
             Mov,
             Ret,
         } tag;
+
+        enum class width_t {
+            Undef,
+            Byte,
+            Word,
+            Dword,
+            Qword,
+        } width;
 
         arg_t a1, a2;
     };
