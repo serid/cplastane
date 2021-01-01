@@ -7,6 +7,7 @@ namespace assembly {
     struct mnemo_t {
         struct arg_t {
             enum class reg_t {
+                Undef,
                 Eax,
                 Ebx,
                 Ecx,
@@ -14,6 +15,7 @@ namespace assembly {
             };
 
             enum class tag_t {
+                Undef,
                 Immediate,
                 Register,
                 Memory,
@@ -31,6 +33,7 @@ namespace assembly {
         };
 
         enum class tag_t {
+            Undef,
             Mov,
             Ret,
         } tag;
