@@ -98,7 +98,7 @@ namespace assembly {
     }
 
     // The function executes the code at pointer mc as if it was a `jit_func_t` function.
-    auto eval_mc(const u8 *mc, size_t len) -> void {
+    auto eval_mc(const u8 *mc, size_t len) -> i64 {
         // This function places a `ud2` trap after the executable code to catch
         // malicous programs which overflow the buffer and continue executing.
         // Extend buffer to accomodate `ud2` trap.
@@ -116,9 +116,32 @@ namespace assembly {
 
         auto func = (jit_func_t) exec_mc;
 
-        std::cout << func();
+        i64 execution_result = func();
 
         munmap(exec_mc, buf_len);
+
+        return execution_result;
+    }
+
+    auto test_func(const string& name, const vector<mnemo_t>& mnemos, i32 expected_result) {
+        std::cout << ">> Test \"" << name << "\".\n";
+
+        vector<u8> bytes = assemble(mnemos);
+
+        std::cout << "Compilation successful, bytes: ";
+
+        std::cout << "[";
+        for (const u8 &n:bytes) {
+            std::cout << std::hex << i32(n) << std::dec << ", ";
+        }
+        std::cout << "]\n";
+
+        i64 result = eval_mc(bytes.data(), bytes.size());
+        if (result != expected_result) {
+            std::cout << "Test failed.\nExpected result: " << expected_result << "\nActual result: " << result << "\n";
+        } else {
+            std::cout << "Success. result: (" << result << ").\n";
+        }
     }
 
     void test_jit() {
@@ -175,14 +198,6 @@ namespace assembly {
         };
         mnemos.push_back(x_mnemo);
 
-        vector<u8> bytes = assemble(mnemos);
-
-        std::cout << "[";
-        for (const u8 &n:bytes) {
-            std::cout << std::hex << i32(n) << std::dec << ", ";
-        }
-        std::cout << "]\n";
-
-        eval_mc(bytes.data(), bytes.size());
+        test_func("test", mnemos, 0xff00);
     }
 }

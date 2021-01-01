@@ -55,7 +55,7 @@ namespace assembly {
 
     auto assemble(const vector<mnemo_t> &mnemos) -> vector<u8>;
 
-    auto eval_mc(const u8 *mc, size_t len) -> void;
+    auto eval_mc(const u8 *mc, size_t len) -> i64;
 
     typedef i64 (*jit_func_t)();
 
