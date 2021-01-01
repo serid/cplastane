@@ -44,6 +44,7 @@ namespace assembly {
 
         enum class width_t {
             Undef,
+            NotSet, // Used in instructions which don't care about width like `ret`
             Byte,
             Word,
             Dword,

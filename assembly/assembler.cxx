@@ -30,51 +30,46 @@ namespace assembly {
         if (mnemo.tag != mnemo_t::tag_t::Mov)
             throw std::logic_error("Wrong mnemo!");
 
-        switch (mnemo.width) {
-            case mnemo_t::width_t::Dword: {
-                if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register &&
-                    mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register) {
-                    // mov r/m32, r32
-                    u8 opcode = 0x89;
-                    u8 mod = 0b11;
-                    u8 rm = reg_to_number(mnemo.a1.data.reg);
-                    u8 reg = reg_to_number(mnemo.a2.data.reg);
-                    out.push_back(opcode);
-                    out.push_back(mod_and_reg_and_rm_to_byte(mod, reg, rm));
-                } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register &&
-                           mnemo.a2.tag == mnemo_t::arg_t::tag_t::Immediate) {
-                    // mov r32, imm32
-                    u8 opcode = 0xB8;
-                    opcode += reg_to_number(mnemo.a1.data.reg);
-                    out.push_back(opcode);
+        if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register &&
+            mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register) {
+            // mov r/m32, r32
+            u8 opcode = 0x89;
+            u8 mod = 0b11;
+            u8 rm = reg_to_number(mnemo.a1.data.reg);
+            u8 reg = reg_to_number(mnemo.a2.data.reg);
+            out.push_back(opcode);
+            out.push_back(mod_and_reg_and_rm_to_byte(mod, reg, rm));
+        } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register &&
+                   mnemo.a2.tag == mnemo_t::arg_t::tag_t::Immediate) {
+            // mov r32, imm32
+            u8 opcode = 0xB8;
+            opcode += reg_to_number(mnemo.a1.data.reg);
+            out.push_back(opcode);
 
-                    // Write LE i32
-                    i32 imm = mnemo.a2.data.imm;
-                    out.push_back(imm & 0xFF);
-                    imm >>= 8;
-                    out.push_back(imm & 0xFF);
-                    imm >>= 8;
-                    out.push_back(imm & 0xFF);
-                    imm >>= 8;
-                    out.push_back(imm & 0xFF);
-                } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Memory &&
-                           mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register) {
-                    // mov r/m32, r32
-                    u8 opcode = 0x89;
-                    // TODO: implement mov to memory and from memory
-                    throw std::exception();
-                    out.push_back(opcode);
-                } else {
-                    throw std::logic_error("Unsupported mov shape!");
-                }
-                break;
-            }
-            default:
-                throw std::logic_error("Unsupported mov width!");
+            // Write LE i32
+            i32 imm = mnemo.a2.data.imm;
+            out.push_back(imm & 0xFF);
+            imm >>= 8;
+            out.push_back(imm & 0xFF);
+            imm >>= 8;
+            out.push_back(imm & 0xFF);
+            imm >>= 8;
+            out.push_back(imm & 0xFF);
+        } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Memory &&
+                   mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register) {
+            // mov r/m32, r32
+            u8 opcode = 0x89;
+            // TODO: implement mov to memory and from memory
+            throw std::exception();
+            out.push_back(opcode);
+        } else {
+            throw std::logic_error("Unsupported mov shape!");
         }
     }
 
     auto assemble_mnemo(vector<u8> &out, const mnemo_t &mnemo) -> void {
+        if (mnemo.width != mnemo_t::width_t::Dword && mnemo.width != mnemo_t::width_t::Qword && mnemo.width != mnemo_t::width_t::NotSet)
+            throw std::logic_error("Unsupported width! assemble_mnemo");
         switch (mnemo.tag) {
             case mnemo_t::tag_t::Mov: {
                 assemble_mnemo_mov(out, mnemo);
@@ -164,6 +159,7 @@ namespace assembly {
         mnemos.push_back(x_mnemo);
         x_mnemo = {
                 .tag = mnemo_t::tag_t::Ret,
+                .width = mnemo_t::width_t::NotSet,
         };
         mnemos.push_back(x_mnemo);
         test_func("Simple `return 100;`", mnemos, 100);
@@ -216,6 +212,7 @@ namespace assembly {
         mnemos.push_back(x_mnemo);
         x_mnemo = {
                 .tag = mnemo_t::tag_t::Ret,
+                .width = mnemo_t::width_t::NotSet,
         };
         mnemos.push_back(x_mnemo);
         // mov ecx, 0xff00
