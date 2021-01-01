@@ -146,8 +146,29 @@ namespace assembly {
 
     void test_jit() {
         vector<mnemo_t> mnemos{};
-
         mnemo_t x_mnemo{};
+
+
+        x_mnemo = {
+                .tag = mnemo_t::tag_t::Mov,
+                .width = mnemo_t::width_t::Dword,
+                .a1 = {
+                        .tag = mnemo_t::arg_t::tag_t::Register,
+                        .data = {.reg = mnemo_t::arg_t::reg_t::Eax}
+                },
+                .a2 = {
+                        .tag = mnemo_t::arg_t::tag_t::Immediate,
+                        .data = {.imm = 100}
+                },
+        };
+        mnemos.push_back(x_mnemo);
+        x_mnemo = {
+                .tag = mnemo_t::tag_t::Ret,
+        };
+        mnemos.push_back(x_mnemo);
+        test_func("Simple `return 100;`", mnemos, 100);
+        mnemos.clear();
+
         /*x_mnemo = {
                 .tag = mnemo_t::tag_t::Mov,
                 .width = mnemo_t::width_t::Dword,
@@ -197,7 +218,10 @@ namespace assembly {
                 .tag = mnemo_t::tag_t::Ret,
         };
         mnemos.push_back(x_mnemo);
-
-        test_func("test", mnemos, 0xff00);
+        // mov ecx, 0xff00
+        // mov eax, ecx
+        // ret
+        test_func("Complex test", mnemos, 0xff00);
+        mnemos.clear();
     }
 }
