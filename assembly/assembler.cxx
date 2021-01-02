@@ -10,12 +10,16 @@ namespace assembly {
     auto reg_to_number(mnemo_t::arg_t::reg_t reg) -> u8 {
         switch (reg) {
             case mnemo_t::arg_t::reg_t::Eax:
+            case mnemo_t::arg_t::reg_t::Rax:
                 return 0b000;
             case mnemo_t::arg_t::reg_t::Ecx:
+            case mnemo_t::arg_t::reg_t::Rcx:
                 return 0b001;
             case mnemo_t::arg_t::reg_t::Edx:
+            case mnemo_t::arg_t::reg_t::Rdx:
                 return 0b010;
             case mnemo_t::arg_t::reg_t::Ebx:
+            case mnemo_t::arg_t::reg_t::Rbx:
                 return 0b011;
             default:
                 throw std::logic_error("Unsupported register!");
@@ -37,6 +41,11 @@ namespace assembly {
             u8 mod = 0b11;
             u8 rm = reg_to_number(mnemo.a1.data.reg);
             u8 reg = reg_to_number(mnemo.a2.data.reg);
+
+            // Put a REX prefix if instruction width = qword
+            if (mnemo.width == mnemo_t::width_t::Qword) {
+                out.push_back(0b01001000);
+            }
             out.push_back(opcode);
             out.push_back(mod_and_reg_and_rm_to_byte(mod, reg, rm));
         } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register &&
@@ -44,17 +53,44 @@ namespace assembly {
             // mov r32, imm32
             u8 opcode = 0xB8;
             opcode += reg_to_number(mnemo.a1.data.reg);
+
+            // Put a REX prefix if instruction width = qword
+            if (mnemo.width == mnemo_t::width_t::Qword) {
+                out.push_back(0b01001000);
+            }
+
             out.push_back(opcode);
 
-            // Write LE i32
-            i32 imm = mnemo.a2.data.imm;
-            out.push_back(imm & 0xFF);
-            imm >>= 8;
-            out.push_back(imm & 0xFF);
-            imm >>= 8;
-            out.push_back(imm & 0xFF);
-            imm >>= 8;
-            out.push_back(imm & 0xFF);
+            // Write imm
+            if (mnemo.width == mnemo_t::width_t::Dword) {
+                // Write LE i32
+                i32 imm = mnemo.a2.data.imm;
+                out.push_back(imm & 0xFF);
+                imm >>= 8;
+                out.push_back(imm & 0xFF);
+                imm >>= 8;
+                out.push_back(imm & 0xFF);
+                imm >>= 8;
+                out.push_back(imm & 0xFF);
+            } else if (mnemo.width == mnemo_t::width_t::Qword) {
+                // Write LE i64
+                i64 imm = mnemo.a2.data.imm;
+                out.push_back(imm & 0xFF);
+                imm >>= 8;
+                out.push_back(imm & 0xFF);
+                imm >>= 8;
+                out.push_back(imm & 0xFF);
+                imm >>= 8;
+                out.push_back(imm & 0xFF);
+                imm >>= 8;
+                out.push_back(imm & 0xFF);
+                imm >>= 8;
+                out.push_back(imm & 0xFF);
+                imm >>= 8;
+                out.push_back(imm & 0xFF);
+                imm >>= 8;
+                out.push_back(imm & 0xFF);
+            }
         } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Memory &&
                    mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register) {
             // mov r/m32, r32
@@ -118,7 +154,7 @@ namespace assembly {
         return execution_result;
     }
 
-    auto test_func(const string& name, const vector<mnemo_t>& mnemos, i32 expected_result) {
+    auto test_func(const string& name, const vector<mnemo_t>& mnemos, i64 expected_result) {
         std::cout << ">> Test \"" << name << "\".\n";
 
         vector<u8> bytes = assemble(mnemos);
@@ -218,7 +254,45 @@ namespace assembly {
         // mov ecx, 0xff00
         // mov eax, ecx
         // ret
-        test_func("Complex test", mnemos, 0xff00);
+        test_func("Reg mov test", mnemos, 0xff00);
+        mnemos.clear();
+
+
+        x_mnemo = {
+                .tag = mnemo_t::tag_t::Mov,
+                .width = mnemo_t::width_t::Qword,
+                .a1 = {
+                        .tag = mnemo_t::arg_t::tag_t::Register,
+                        .data = {.reg = mnemo_t::arg_t::reg_t::Rcx}
+                },
+                .a2 = {
+                        .tag = mnemo_t::arg_t::tag_t::Immediate,
+                        .data = {.imm = 0x0f1f2f3f4f5f6f7f}
+                },
+        };
+        mnemos.push_back(x_mnemo);
+        x_mnemo = {
+                .tag = mnemo_t::tag_t::Mov,
+                .width = mnemo_t::width_t::Qword,
+                .a1 = {
+                        .tag = mnemo_t::arg_t::tag_t::Register,
+                        .data = {.reg = mnemo_t::arg_t::reg_t::Rax}
+                },
+                .a2 = {
+                        .tag = mnemo_t::arg_t::tag_t::Register,
+                        .data = {.reg = mnemo_t::arg_t::reg_t::Rcx}
+                },
+        };
+        mnemos.push_back(x_mnemo);
+        x_mnemo = {
+                .tag = mnemo_t::tag_t::Ret,
+                .width = mnemo_t::width_t::NotSet,
+        };
+        mnemos.push_back(x_mnemo);
+        // mov rcx, 0x0f1f2f3f4f5f6f7f
+        // mov rax, rcx
+        // ret
+        test_func("64 bit reg mov test", mnemos, 0x0f1f2f3f4f5f6f7f);
         mnemos.clear();
     }
 }

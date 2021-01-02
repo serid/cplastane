@@ -25,7 +25,7 @@ namespace assembly {
                 Memory,
             } tag;
             union data_t {
-                i32 imm;
+                i64 imm;
                 reg_t reg;
                 struct memory_t {
                     reg_t base;
