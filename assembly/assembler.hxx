@@ -60,5 +60,5 @@ namespace assembly {
 
     typedef i64 (*jit_func_t)();
 
-    void test_jit();
+    auto test_jit() -> void;
 }

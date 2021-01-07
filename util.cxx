@@ -1,8 +1,8 @@
 #include "util.hxx"
 
 auto is_prefix(const string &s, size_t start, const string &prefix) -> bool {
-    ssize_t i = start; // Index in s
-    ssize_t j = 0; // Index in prefix
+    size_t i = start; // Index in s
+    size_t j = 0; // Index in prefix
     for (;;) {
         // Prefix ended
         if (j >= prefix.size())

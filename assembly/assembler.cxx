@@ -104,7 +104,8 @@ namespace assembly {
     }
 
     auto assemble_mnemo(vector<u8> &out, const mnemo_t &mnemo) -> void {
-        if (mnemo.width != mnemo_t::width_t::Dword && mnemo.width != mnemo_t::width_t::Qword && mnemo.width != mnemo_t::width_t::NotSet)
+        if (mnemo.width != mnemo_t::width_t::Dword && mnemo.width != mnemo_t::width_t::Qword &&
+            mnemo.width != mnemo_t::width_t::NotSet)
             throw std::logic_error("Unsupported width! assemble_mnemo");
         switch (mnemo.tag) {
             case mnemo_t::tag_t::Mov: {
@@ -154,7 +155,7 @@ namespace assembly {
         return execution_result;
     }
 
-    auto test_func(const string& name, const vector<mnemo_t>& mnemos, i64 expected_result) {
+    auto test_func(const string &name, const vector<mnemo_t> &mnemos, i64 expected_result) -> void {
         std::cout << ">> Test \"" << name << "\".\n";
 
         vector<u8> bytes = assemble(mnemos);
@@ -175,7 +176,7 @@ namespace assembly {
         }
     }
 
-    void test_jit() {
+    auto test_jit() -> void {
         vector<mnemo_t> mnemos{};
         mnemo_t x_mnemo{};
 
