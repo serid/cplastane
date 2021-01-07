@@ -178,29 +178,27 @@ namespace assembly {
 
     auto test_jit() -> void {
         vector<mnemo_t> mnemos{};
-        mnemo_t x_mnemo{};
 
 
-        x_mnemo = {
-                .tag = mnemo_t::tag_t::Mov,
-                .width = mnemo_t::width_t::Dword,
-                .a1 = {
-                        .tag = mnemo_t::arg_t::tag_t::Register,
-                        .data = {.reg = mnemo_t::arg_t::reg_t::Eax}
+        mnemos = {
+                {
+                        .tag = mnemo_t::tag_t::Mov,
+                        .width = mnemo_t::width_t::Dword,
+                        .a1 = {
+                                .tag = mnemo_t::arg_t::tag_t::Register,
+                                .data = {.reg = mnemo_t::arg_t::reg_t::Eax}
+                        },
+                        .a2 = {
+                                .tag = mnemo_t::arg_t::tag_t::Immediate,
+                                .data = {.imm = 100}
+                        },
                 },
-                .a2 = {
-                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                        .data = {.imm = 100}
-                },
+                {
+                        .tag = mnemo_t::tag_t::Ret,
+                        .width = mnemo_t::width_t::NotSet,
+                }
         };
-        mnemos.push_back(x_mnemo);
-        x_mnemo = {
-                .tag = mnemo_t::tag_t::Ret,
-                .width = mnemo_t::width_t::NotSet,
-        };
-        mnemos.push_back(x_mnemo);
         test_func("Simple `return 100;`", mnemos, 100);
-        mnemos.clear();
 
         /*x_mnemo = {
                 .tag = mnemo_t::tag_t::Mov,
@@ -221,79 +219,75 @@ namespace assembly {
                 },
         };
         mnemos.push_back(x_mnemo);*/
-        x_mnemo = {
-                .tag = mnemo_t::tag_t::Mov,
-                .width = mnemo_t::width_t::Dword,
-                .a1 = {
-                        .tag = mnemo_t::arg_t::tag_t::Register,
-                        .data = {.reg = mnemo_t::arg_t::reg_t::Ecx}
+        mnemos = {
+                {
+                        .tag = mnemo_t::tag_t::Mov,
+                        .width = mnemo_t::width_t::Dword,
+                        .a1 = {
+                                .tag = mnemo_t::arg_t::tag_t::Register,
+                                .data = {.reg = mnemo_t::arg_t::reg_t::Ecx}
+                        },
+                        .a2 = {
+                                .tag = mnemo_t::arg_t::tag_t::Immediate,
+                                .data = {.imm = 0xff00}
+                        },
                 },
-                .a2 = {
-                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                        .data = {.imm = 0xff00}
+                {
+                        .tag = mnemo_t::tag_t::Mov,
+                        .width = mnemo_t::width_t::Dword,
+                        .a1 = {
+                                .tag = mnemo_t::arg_t::tag_t::Register,
+                                .data = {.reg = mnemo_t::arg_t::reg_t::Eax}
+                        },
+                        .a2 = {
+                                .tag = mnemo_t::arg_t::tag_t::Register,
+                                .data = {.reg = mnemo_t::arg_t::reg_t::Ecx}
+                        },
                 },
+                {
+                        .tag = mnemo_t::tag_t::Ret,
+                        .width = mnemo_t::width_t::NotSet,
+                }
         };
-        mnemos.push_back(x_mnemo);
-        x_mnemo = {
-                .tag = mnemo_t::tag_t::Mov,
-                .width = mnemo_t::width_t::Dword,
-                .a1 = {
-                        .tag = mnemo_t::arg_t::tag_t::Register,
-                        .data = {.reg = mnemo_t::arg_t::reg_t::Eax}
-                },
-                .a2 = {
-                        .tag = mnemo_t::arg_t::tag_t::Register,
-                        .data = {.reg = mnemo_t::arg_t::reg_t::Ecx}
-                },
-        };
-        mnemos.push_back(x_mnemo);
-        x_mnemo = {
-                .tag = mnemo_t::tag_t::Ret,
-                .width = mnemo_t::width_t::NotSet,
-        };
-        mnemos.push_back(x_mnemo);
         // mov ecx, 0xff00
         // mov eax, ecx
         // ret
         test_func("Reg mov test", mnemos, 0xff00);
-        mnemos.clear();
 
 
-        x_mnemo = {
-                .tag = mnemo_t::tag_t::Mov,
-                .width = mnemo_t::width_t::Qword,
-                .a1 = {
-                        .tag = mnemo_t::arg_t::tag_t::Register,
-                        .data = {.reg = mnemo_t::arg_t::reg_t::Rcx}
+        mnemos = {
+                {
+                        .tag = mnemo_t::tag_t::Mov,
+                        .width = mnemo_t::width_t::Qword,
+                        .a1 = {
+                                .tag = mnemo_t::arg_t::tag_t::Register,
+                                .data = {.reg = mnemo_t::arg_t::reg_t::Rcx}
+                        },
+                        .a2 = {
+                                .tag = mnemo_t::arg_t::tag_t::Immediate,
+                                .data = {.imm = 0x0f1f2f3f4f5f6f7f}
+                        },
                 },
-                .a2 = {
-                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                        .data = {.imm = 0x0f1f2f3f4f5f6f7f}
+                {
+                        .tag = mnemo_t::tag_t::Mov,
+                        .width = mnemo_t::width_t::Qword,
+                        .a1 = {
+                                .tag = mnemo_t::arg_t::tag_t::Register,
+                                .data = {.reg = mnemo_t::arg_t::reg_t::Rax}
+                        },
+                        .a2 = {
+                                .tag = mnemo_t::arg_t::tag_t::Register,
+                                .data = {.reg = mnemo_t::arg_t::reg_t::Rcx}
+                        },
                 },
+                {
+                        .tag = mnemo_t::tag_t::Ret,
+                        .width = mnemo_t::width_t::NotSet,
+                }
         };
-        mnemos.push_back(x_mnemo);
-        x_mnemo = {
-                .tag = mnemo_t::tag_t::Mov,
-                .width = mnemo_t::width_t::Qword,
-                .a1 = {
-                        .tag = mnemo_t::arg_t::tag_t::Register,
-                        .data = {.reg = mnemo_t::arg_t::reg_t::Rax}
-                },
-                .a2 = {
-                        .tag = mnemo_t::arg_t::tag_t::Register,
-                        .data = {.reg = mnemo_t::arg_t::reg_t::Rcx}
-                },
-        };
-        mnemos.push_back(x_mnemo);
-        x_mnemo = {
-                .tag = mnemo_t::tag_t::Ret,
-                .width = mnemo_t::width_t::NotSet,
-        };
-        mnemos.push_back(x_mnemo);
         // mov rcx, 0x0f1f2f3f4f5f6f7f
         // mov rax, rcx
         // ret
         test_func("64 bit reg mov test", mnemos, 0x0f1f2f3f4f5f6f7f);
-        mnemos.clear();
     }
 }
