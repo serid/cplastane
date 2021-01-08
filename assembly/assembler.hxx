@@ -8,6 +8,18 @@ namespace assembly {
         struct arg_t {
             enum class reg_t {
                 Undef,
+                Al,
+                Bl,
+                Cl,
+                Dl,
+                Ah,
+                Bh,
+                Ch,
+                Dh,
+                Ax,
+                Bx,
+                Cx,
+                Dx,
                 Eax,
                 Ebx,
                 Ecx,

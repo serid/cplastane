@@ -9,18 +9,34 @@ namespace assembly {
     // Converts reg_t to number usable in ModR/M and reg fields of instruction encoding
     auto reg_to_number(mnemo_t::arg_t::reg_t reg) -> u8 {
         switch (reg) {
+            case mnemo_t::arg_t::reg_t::Al:
+            case mnemo_t::arg_t::reg_t::Ax:
             case mnemo_t::arg_t::reg_t::Eax:
             case mnemo_t::arg_t::reg_t::Rax:
                 return 0b000;
+            case mnemo_t::arg_t::reg_t::Cl:
+            case mnemo_t::arg_t::reg_t::Cx:
             case mnemo_t::arg_t::reg_t::Ecx:
             case mnemo_t::arg_t::reg_t::Rcx:
                 return 0b001;
+            case mnemo_t::arg_t::reg_t::Dl:
+            case mnemo_t::arg_t::reg_t::Dx:
             case mnemo_t::arg_t::reg_t::Edx:
             case mnemo_t::arg_t::reg_t::Rdx:
                 return 0b010;
+            case mnemo_t::arg_t::reg_t::Bl:
+            case mnemo_t::arg_t::reg_t::Bx:
             case mnemo_t::arg_t::reg_t::Ebx:
             case mnemo_t::arg_t::reg_t::Rbx:
                 return 0b011;
+            case mnemo_t::arg_t::reg_t::Ah:
+                return 0b100;
+            case mnemo_t::arg_t::reg_t::Ch:
+                return 0b101;
+            case mnemo_t::arg_t::reg_t::Dh:
+                return 0b110;
+            case mnemo_t::arg_t::reg_t::Bh:
+                return 0b111;
             default:
                 throw std::logic_error("Unsupported register!");
         }
@@ -50,9 +66,27 @@ namespace assembly {
             out.push_back(mod_and_reg_and_rm_to_byte(mod, reg, rm));
         } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register &&
                    mnemo.a2.tag == mnemo_t::arg_t::tag_t::Immediate) {
-            // mov r32, imm32
-            u8 opcode = 0xB8;
+            u8 opcode;
+            switch (mnemo.width) {
+                case mnemo_t::width_t::Byte:
+                    // mov r8, imm8
+                    opcode = 0xb0;
+                    break;
+                case mnemo_t::width_t::Word:
+                case mnemo_t::width_t::Dword:
+                case mnemo_t::width_t::Qword:
+                    // mov r32, imm32
+                    opcode = 0xb8;
+                    break;
+                default:
+                    throw std::logic_error("Unsupported width!");
+            }
             opcode += reg_to_number(mnemo.a1.data.reg);
+
+            // Put a width-altering prefix if instruction width = word
+            if (mnemo.width == mnemo_t::width_t::Word) {
+                out.push_back(0x66);
+            }
 
             // Put a REX prefix if instruction width = qword
             if (mnemo.width == mnemo_t::width_t::Qword) {
@@ -62,7 +96,16 @@ namespace assembly {
             out.push_back(opcode);
 
             // Write imm
-            if (mnemo.width == mnemo_t::width_t::Dword) {
+            if (mnemo.width == mnemo_t::width_t::Byte) {
+                // Write i8
+                out.push_back(mnemo.a2.data.imm);
+            } else if (mnemo.width == mnemo_t::width_t::Word) {
+                // Write LE i16
+                i16 imm = mnemo.a2.data.imm;
+                out.push_back(imm & 0xFF);
+                imm >>= 8;
+                out.push_back(imm & 0xFF);
+            } else if (mnemo.width == mnemo_t::width_t::Dword) {
                 // Write LE i32
                 i32 imm = mnemo.a2.data.imm;
                 out.push_back(imm & 0xFF);
@@ -104,7 +147,8 @@ namespace assembly {
     }
 
     auto assemble_mnemo(vector<u8> &out, const mnemo_t &mnemo) -> void {
-        if (mnemo.width != mnemo_t::width_t::Dword && mnemo.width != mnemo_t::width_t::Qword &&
+        if (mnemo.width != mnemo_t::width_t::Byte && mnemo.width != mnemo_t::width_t::Word &&
+            mnemo.width != mnemo_t::width_t::Dword && mnemo.width != mnemo_t::width_t::Qword &&
             mnemo.width != mnemo_t::width_t::NotSet)
             throw std::logic_error("Unsupported width! assemble_mnemo");
         switch (mnemo.tag) {
@@ -296,6 +340,42 @@ namespace assembly {
                                         .tag = mnemo_t::tag_t::Ret,
                                         .width = mnemo_t::width_t::NotSet,
                                 }
+                        }
+                }},
+
+                // Simple mov test. Second mov superimposes value on a previous value.
+                // TODO: expand test to cover every register and register width
+                // mov rax, 0x0f0f0f0f0f0f0f0f
+                // mov al, 0
+                // ret
+                {.name="Byte-wise mov", .result=0x0f0f0f0f0f0f0f00, .mnemos={
+                        {
+                                .tag = mnemo_t::tag_t::Mov,
+                                .width = mnemo_t::width_t::Qword,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rax}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
+                                        .data = {.imm = 0x0f0f0f0f0f0f0f0f}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Mov,
+                                .width = mnemo_t::width_t::Byte,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Al}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
+                                        .data = {.imm = 0}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Ret,
+                                .width = mnemo_t::width_t::NotSet,
                         }
                 }},
         };
