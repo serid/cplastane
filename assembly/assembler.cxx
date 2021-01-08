@@ -70,7 +70,7 @@ namespace assembly {
         }
     }
 
-    static auto mod_and_reg_and_rm_to_byte(u8 mod, u8 reg, u8 rm) -> u8 {
+    static auto mod_and_reg_and_rm_to_modrm(u8 mod, u8 reg, u8 rm) -> u8 {
         return (mod << 6) | (reg << 3) | (rm << 0);
     }
 
@@ -116,7 +116,7 @@ namespace assembly {
             push_OSOR_if_word(out, mnemo);
             push_rex_if_qword(out, mnemo);
             out.push_back(opcode);
-            out.push_back(mod_and_reg_and_rm_to_byte(mod, reg, rm));
+            out.push_back(mod_and_reg_and_rm_to_modrm(mod, reg, rm));
         } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register &&
                    mnemo.a2.tag == mnemo_t::arg_t::tag_t::Immediate) {
             u8 opcode;
