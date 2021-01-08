@@ -46,6 +46,20 @@ namespace assembly {
         return (mod << 6) | (reg << 3) | (rm << 0);
     }
 
+    // Put a operand-size override prefix if instruction width = word
+    auto push_OSOR_if_word(vector<u8> &out, const mnemo_t &mnemo) -> void {
+        if (mnemo.width == mnemo_t::width_t::Word) {
+            out.push_back(0x66);
+        }
+    }
+
+    // Put a REX prefix if instruction width = qword
+    auto push_rex_if_qword(vector<u8> &out, const mnemo_t &mnemo) -> void {
+        if (mnemo.width == mnemo_t::width_t::Qword) {
+            out.push_back(0b01001000);
+        }
+    }
+
     auto assemble_mnemo_mov(vector<u8> &out, const mnemo_t &mnemo) -> void {
         if (mnemo.tag != mnemo_t::tag_t::Mov)
             throw std::logic_error("Wrong mnemo!");
@@ -71,14 +85,8 @@ namespace assembly {
             u8 rm = reg_to_number(mnemo.a1.data.reg);
             u8 reg = reg_to_number(mnemo.a2.data.reg);
 
-            // Put a width-altering prefix if instruction width = word
-            if (mnemo.width == mnemo_t::width_t::Word) {
-                out.push_back(0x66);
-            }
-            // Put a REX prefix if instruction width = qword
-            if (mnemo.width == mnemo_t::width_t::Qword) {
-                out.push_back(0b01001000);
-            }
+            push_OSOR_if_word(out, mnemo);
+            push_rex_if_qword(out, mnemo);
             out.push_back(opcode);
             out.push_back(mod_and_reg_and_rm_to_byte(mod, reg, rm));
         } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register &&
@@ -100,16 +108,8 @@ namespace assembly {
             }
             opcode += reg_to_number(mnemo.a1.data.reg);
 
-            // Put a width-altering prefix if instruction width = word
-            if (mnemo.width == mnemo_t::width_t::Word) {
-                out.push_back(0x66);
-            }
-
-            // Put a REX prefix if instruction width = qword
-            if (mnemo.width == mnemo_t::width_t::Qword) {
-                out.push_back(0b01001000);
-            }
-
+            push_OSOR_if_word(out, mnemo);
+            push_rex_if_qword(out, mnemo);
             out.push_back(opcode);
 
             // Write imm
