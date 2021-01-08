@@ -153,11 +153,8 @@ namespace assembly {
             }
         } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Memory &&
                    mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register) {
-            // mov r/m32, r32
-            u8 opcode = 0x89;
             // TODO: implement mov to memory and from memory
             throw std::exception();
-            out.push_back(opcode);
         } else {
             throw std::logic_error("Unsupported mov shape!");
         }
