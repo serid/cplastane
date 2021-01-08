@@ -13,7 +13,7 @@ add_executable(cplastane
         assembly/assembler.hxx
         )
 
-target_compile_options(cplastane PUBLIC -Wall -Wextra -Werror -Wno-missing-field-initializers)
+target_compile_options(cplastane PUBLIC -Wall -Wextra -Werror -Wno-missing-field-initializers -Wno-unused-variable)
 
 set(CMAKE_C_FLAGS "-fsanitize=address -O0 -fno-omit-frame-pointer -g")
 set(CMAKE_CXX_FLAGS "-fsanitize=address -O0 -fno-omit-frame-pointer -g")
