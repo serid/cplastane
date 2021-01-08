@@ -29,7 +29,8 @@ namespace test {
 
         i64 result = jit::eval_mc(bytes.data(), bytes.size());
         if (result != x_test.expected_result) {
-            std::cout << "Test failed.\nExpected expected_result: " << x_test.expected_result << "\nActual expected_result: " << result << "\n";
+            std::cout << "Test failed.\nExpected expected_result: " << x_test.expected_result
+                      << "\nActual expected_result: " << result << "\n";
             return false;
         } else {
             std::cout << "Success. expected_result: (" << result << ").\n";
