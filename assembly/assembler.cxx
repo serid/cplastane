@@ -52,12 +52,29 @@ namespace assembly {
 
         if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register &&
             mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register) {
-            // mov r/m32, r32
-            u8 opcode = 0x89;
+            u8 opcode;
+            switch (mnemo.width) {
+                case mnemo_t::width_t::Byte:
+                    // mov r/m8, r8
+                    opcode = 0x88;
+                    break;
+                case mnemo_t::width_t::Word:
+                case mnemo_t::width_t::Dword:
+                case mnemo_t::width_t::Qword:
+                    // mov r/m32, r32
+                    opcode = 0x89;
+                    break;
+                default:
+                    throw std::logic_error("Unsupported width!");
+            }
             u8 mod = 0b11;
             u8 rm = reg_to_number(mnemo.a1.data.reg);
             u8 reg = reg_to_number(mnemo.a2.data.reg);
 
+            // Put a width-altering prefix if instruction width = word
+            if (mnemo.width == mnemo_t::width_t::Word) {
+                out.push_back(0x66);
+            }
             // Put a REX prefix if instruction width = qword
             if (mnemo.width == mnemo_t::width_t::Qword) {
                 out.push_back(0b01001000);
@@ -371,6 +388,68 @@ namespace assembly {
                                 .a2 = {
                                         .tag = mnemo_t::arg_t::tag_t::Immediate,
                                         .data = {.imm = 0}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Ret,
+                                .width = mnemo_t::width_t::NotSet,
+                        }
+                }},
+
+                // Simple `mov reg, reg` test.
+                // TODO: expand test to cover every register and register width
+                // mov rax, 0x0f0f0f0f0f0f0f0f
+                // mov cx, 0x0a0a
+                // mov dx, cx
+                // mov ax, dx
+                // ret
+                {.name="Byte-wise `mov reg, reg`", .result=0x0f0f0f0f0f0f0a0a, .mnemos={
+                        {
+                                .tag = mnemo_t::tag_t::Mov,
+                                .width = mnemo_t::width_t::Qword,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rax}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
+                                        .data = {.imm = 0x0f0f0f0f0f0f0f0f}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Mov,
+                                .width = mnemo_t::width_t::Word,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Cx}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
+                                        .data = {.imm = 0x0a0a}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Mov,
+                                .width = mnemo_t::width_t::Word,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Dx}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Cx}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Mov,
+                                .width = mnemo_t::width_t::Word,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Ax}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Dx}
                                 },
                         },
                         {
