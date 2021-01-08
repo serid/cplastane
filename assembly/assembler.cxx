@@ -155,7 +155,7 @@ namespace assembly {
         return execution_result;
     }
 
-    auto test_func(const string &name, const vector<mnemo_t> &mnemos, i64 expected_result) -> void {
+    auto test_func(const string &name, const vector<mnemo_t> &mnemos, i64 expected_result) -> bool {
         std::cout << ">> Test \"" << name << "\".\n";
 
         vector<u8> bytes = assemble(mnemos);
@@ -171,8 +171,10 @@ namespace assembly {
         i64 result = eval_mc(bytes.data(), bytes.size());
         if (result != expected_result) {
             std::cout << "Test failed.\nExpected result: " << expected_result << "\nActual result: " << result << "\n";
+            return false;
         } else {
             std::cout << "Success. result: (" << result << ").\n";
+            return true;
         }
     }
 
@@ -298,8 +300,14 @@ namespace assembly {
                 }},
         };
 
+        u64 success_counter = 0;
+
         for (const test_t &x:tests) {
-            test_func(x.name, x.mnemos, x.result);
+            bool success = test_func(x.name, x.mnemos, x.result);
+            success_counter += success;
         }
+
+        std::cout << "\n";
+        std::cout << "Testing complete [" << success_counter << " / " << tests.size() << "].\n";
     }
 }
