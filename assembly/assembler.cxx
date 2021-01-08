@@ -3,6 +3,37 @@
 #include <stdexcept>
 
 namespace assembly {
+    static auto register_width(mnemo_t::arg_t::reg_t reg) -> mnemo_t::width_t {
+        switch (reg) {
+            case mnemo_t::arg_t::reg_t::Al:
+            case mnemo_t::arg_t::reg_t::Bl:
+            case mnemo_t::arg_t::reg_t::Cl:
+            case mnemo_t::arg_t::reg_t::Dl:
+            case mnemo_t::arg_t::reg_t::Ah:
+            case mnemo_t::arg_t::reg_t::Bh:
+            case mnemo_t::arg_t::reg_t::Ch:
+            case mnemo_t::arg_t::reg_t::Dh:
+                return mnemo_t::width_t::Byte;
+            case mnemo_t::arg_t::reg_t::Ax:
+            case mnemo_t::arg_t::reg_t::Bx:
+            case mnemo_t::arg_t::reg_t::Cx:
+            case mnemo_t::arg_t::reg_t::Dx:
+                return mnemo_t::width_t::Word;
+            case mnemo_t::arg_t::reg_t::Eax:
+            case mnemo_t::arg_t::reg_t::Ebx:
+            case mnemo_t::arg_t::reg_t::Ecx:
+            case mnemo_t::arg_t::reg_t::Edx:
+                return mnemo_t::width_t::Dword;
+            case mnemo_t::arg_t::reg_t::Rax:
+            case mnemo_t::arg_t::reg_t::Rbx:
+            case mnemo_t::arg_t::reg_t::Rcx:
+            case mnemo_t::arg_t::reg_t::Rdx:
+                return mnemo_t::width_t::Qword;
+            default:
+                throw std::logic_error("Unsupported register! register_width");
+        }
+    }
+
     // Converts reg_t to number usable in ModR/M and reg fields of instruction encoding
     static auto reg_to_number(mnemo_t::arg_t::reg_t reg) -> u8 {
         switch (reg) {
@@ -110,43 +141,54 @@ namespace assembly {
             out.push_back(opcode);
 
             // Write imm
-            if (mnemo.width == mnemo_t::width_t::Byte) {
-                // Write i8
-                out.push_back(mnemo.a2.data.imm);
-            } else if (mnemo.width == mnemo_t::width_t::Word) {
-                // Write LE i16
-                i16 imm = mnemo.a2.data.imm;
-                out.push_back(imm & 0xFF);
-                imm >>= 8;
-                out.push_back(imm & 0xFF);
-            } else if (mnemo.width == mnemo_t::width_t::Dword) {
-                // Write LE i32
-                i32 imm = mnemo.a2.data.imm;
-                out.push_back(imm & 0xFF);
-                imm >>= 8;
-                out.push_back(imm & 0xFF);
-                imm >>= 8;
-                out.push_back(imm & 0xFF);
-                imm >>= 8;
-                out.push_back(imm & 0xFF);
-            } else if (mnemo.width == mnemo_t::width_t::Qword) {
-                // Write LE i64
-                i64 imm = mnemo.a2.data.imm;
-                out.push_back(imm & 0xFF);
-                imm >>= 8;
-                out.push_back(imm & 0xFF);
-                imm >>= 8;
-                out.push_back(imm & 0xFF);
-                imm >>= 8;
-                out.push_back(imm & 0xFF);
-                imm >>= 8;
-                out.push_back(imm & 0xFF);
-                imm >>= 8;
-                out.push_back(imm & 0xFF);
-                imm >>= 8;
-                out.push_back(imm & 0xFF);
-                imm >>= 8;
-                out.push_back(imm & 0xFF);
+            switch (mnemo.width) {
+                case mnemo_t::width_t::Byte: {
+                    // Write i8
+                    out.push_back(mnemo.a2.data.imm);
+                    break;
+                }
+                case mnemo_t::width_t::Word: {
+                    // Write LE i16
+                    i16 imm = mnemo.a2.data.imm;
+                    out.push_back(imm & 0xFF);
+                    imm >>= 8;
+                    out.push_back(imm & 0xFF);
+                    break;
+                }
+                case mnemo_t::width_t::Dword: {
+                    // Write LE i32
+                    i32 imm = mnemo.a2.data.imm;
+                    out.push_back(imm & 0xFF);
+                    imm >>= 8;
+                    out.push_back(imm & 0xFF);
+                    imm >>= 8;
+                    out.push_back(imm & 0xFF);
+                    imm >>= 8;
+                    out.push_back(imm & 0xFF);
+                    break;
+                }
+                case mnemo_t::width_t::Qword: {
+                    // Write LE i64
+                    i64 imm = mnemo.a2.data.imm;
+                    out.push_back(imm & 0xFF);
+                    imm >>= 8;
+                    out.push_back(imm & 0xFF);
+                    imm >>= 8;
+                    out.push_back(imm & 0xFF);
+                    imm >>= 8;
+                    out.push_back(imm & 0xFF);
+                    imm >>= 8;
+                    out.push_back(imm & 0xFF);
+                    imm >>= 8;
+                    out.push_back(imm & 0xFF);
+                    imm >>= 8;
+                    out.push_back(imm & 0xFF);
+                    imm >>= 8;
+                    out.push_back(imm & 0xFF);
+                    break;
+                }
+                default:
+                    throw std::logic_error("Unsupported width! 1");
             }
         } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Memory &&
                    mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register) {
@@ -162,6 +204,13 @@ namespace assembly {
             mnemo.width != mnemo_t::width_t::Dword && mnemo.width != mnemo_t::width_t::Qword &&
             mnemo.width != mnemo_t::width_t::NotSet)
             throw std::logic_error("Unsupported width! assemble_mnemo");
+        if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register && register_width(mnemo.a1.data.reg) != mnemo.width) {
+            throw std::logic_error("arg1 register width does not match instruction width!");
+        }
+        if (mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register && register_width(mnemo.a2.data.reg) != mnemo.width) {
+            throw std::logic_error("arg2 register width does not match instruction width!");
+        }
+
         switch (mnemo.tag) {
             case mnemo_t::tag_t::Mov: {
                 assemble_mnemo_mov(out, mnemo);
