@@ -94,8 +94,41 @@ namespace assembly {
         }
     }
 
+    // scale_t::S0 should be handled outside this function since it is not encoded with SS with but rather with Index bits equal to 0b100
+    static auto scale_to_byte(mnemo_t::arg_t::memory_t::scale_t scale) -> u8 {
+        switch (scale) {
+            case mnemo_t::arg_t::memory_t::scale_t::S0:
+                throw std::logic_error("Unexpected scale_t::S0 @ scale_to_byte");
+            case mnemo_t::arg_t::memory_t::scale_t::S1:
+                return 0b00;
+            case mnemo_t::arg_t::memory_t::scale_t::S2:
+                return 0b01;
+            case mnemo_t::arg_t::memory_t::scale_t::S4:
+                return 0b10;
+            case mnemo_t::arg_t::memory_t::scale_t::S8:
+                return 0b11;
+            default:
+                throw std::logic_error("Scale is Undef.");
+        }
+    }
+
     static auto mod_and_reg_and_rm_to_modrm(u8 mod, u8 reg, u8 rm) -> u8 {
         return (mod << 6) | (reg << 3) | (rm << 0);
+    }
+
+    static auto scale_and_index_and_base_to_sib(u8 scale, u8 index, u8 base) -> u8 {
+        return (scale << 6) | (index << 3) | (base << 0);
+    }
+
+    // Put an "address-size override" prefix if address width = dword
+    // In 64 bit mode switches address width from 64 bits to 32 bits
+    static auto push_ASOR_if_dword(vector<u8> &out, const mnemo_t::arg_t::memory_t &memory_field) -> void {
+        if (register_width(memory_field.index) != register_width(memory_field.base)) {
+            throw std::logic_error("Assertion failed: index and base fields have differing widths @ push_ASOR_if_dword");
+        }
+        if (register_width(memory_field.base) == mnemo_t::width_t::Dword) {
+            out.push_back(0x67);
+        }
     }
 
     // Put an "operand-size override" prefix if operand width = word
@@ -110,6 +143,149 @@ namespace assembly {
     static auto push_rex_if_qword(vector<u8> &out, const mnemo_t &mnemo) -> void {
         if (mnemo.width == mnemo_t::width_t::Qword) {
             out.push_back(0b01001000);
+        }
+    }
+
+    // A template for a mnemo which operates on memory.
+    // These mnemos are encoded in the same way and the only difference is opcodes.
+    // opcode1 -- opcode for a byte-wise operation
+    // opcode2 -- opcode for operations with other widths
+    //
+    // Example:
+    // mov mem, reg
+    // is
+    // assemble_memory_mnemo(..., 0x88, 0x89)
+    //
+    // mov reg, mem
+    // is
+    // assemble_memory_mnemo(..., 0x8a, 0x8b)
+    //
+    // add mem, reg
+    // is
+    // assemble_memory_mnemo(..., 0x00, 0x01)
+    //
+    // add reg, mem
+    // is
+    // assemble_memory_mnemo(..., 0x02, 0x03)
+    //
+    // cool isn't it question_mark
+    //
+    // NOTE: Operand Encoding variants are: MR and RM
+    // MR means first operand is memory, second is register
+    // RM means first operand is register, second is memory
+    // This function will deduce variant from `mnemo` parameter a1 and a2 fields
+    // For example:
+    // mov r/m32 r32 ; MR
+    // mov r32 r/m32 ; RM
+    static auto assemble_memory_mnemo(vector<u8> &out, const mnemo_t &mnemo, u8 opcode1, u8 opcode2) -> void {
+        const mnemo_t::arg_t *memory_arg;
+        const mnemo_t::arg_t *register_arg;
+        if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Memory && mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register) {
+            // MR
+            memory_arg = &mnemo.a1;
+            register_arg = &mnemo.a2;
+        } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register && mnemo.a2.tag == mnemo_t::arg_t::tag_t::Memory) {
+            // MR
+            memory_arg = &mnemo.a2;
+            register_arg = &mnemo.a1;
+        } else {
+            throw std::logic_error("Unexpected mnemo shape @ assemble_memory_mnemo");
+        }
+
+        push_ASOR_if_dword(out, memory_arg->data.memory);
+
+        u8 opcode;
+        switch (mnemo.width) {
+            case mnemo_t::width_t::Byte:
+                opcode = opcode1;
+                break;
+            case mnemo_t::width_t::Word:
+            case mnemo_t::width_t::Dword:
+            case mnemo_t::width_t::Qword:
+                opcode = opcode2;
+                break;
+            default:
+                throw std::logic_error("Unsupported width!");
+        }
+        u8 reg = reg_to_number(register_arg->data.reg);
+        u8 mod;
+        u8 rm;
+
+        // Fill in "mod" and "rm"
+        {
+            // This algorithm will always encodes the instruction using SIB byte. This is suboptimal since
+            // mov [eax], eax
+            // can be encoded without the SIB byte, using simple modrm form.
+            // TODO: implement simple modrm adressing
+
+            u8 scale;
+            u8 index;
+            u8 base;
+
+            // Choose disp size
+            if (memory_arg->data.memory.disp == 0) {
+                // no disp
+                mod = 0b00;
+            } else if (-128 <= memory_arg->data.memory.disp && memory_arg->data.memory.disp <= 127) {
+                // disp8
+                mod = 0b01;
+            } else {
+                // disp32
+                mod = 0b10;
+            }
+
+            // Use SIB
+            rm = 0b100;
+
+            // Fill in SIB
+
+            // NOTE: Put simply, SIB adressing does not allow to adress [scaled index] + [EBP].
+            // Instead that bit combination means no base ([scaled index] + disp32).
+            // (00 xxx 100) (xx xxx 101)
+            // mod reg rm    ss index base
+
+            // NOTE: Also, SIB adressing does not allow to use ESP as index.
+            // Instead that bit combination means no index ([base] + dispxx). scale has no effect in this case
+            // (xx xxx 100) (nn 100 xxx)
+            // mod reg rm    ss index base
+
+            if ((mod == 0b00 && memory_arg->data.memory.base == mnemo_t::arg_t::reg_t::Ebp) || memory_arg->data.memory.index == mnemo_t::arg_t::reg_t::Esp) {
+                throw std::logic_error("Bruh");
+                // TODO: handle corner cases
+            }
+
+            // Handle scale_t::S0 edge case
+            if (memory_arg->data.memory.scale == mnemo_t::arg_t::memory_t::scale_t::S0) {
+                scale = 0b00; // In fact it can have any value
+                index = 0b100;
+            } else {
+                scale = scale_to_byte(memory_arg->data.memory.scale);
+                index = reg_to_number(memory_arg->data.memory.index);
+            }
+            base = reg_to_number(memory_arg->data.memory.base);
+
+            push_OSOR_if_word(out, mnemo);
+            push_rex_if_qword(out, mnemo);
+            out.push_back(opcode);
+            out.push_back(mod_and_reg_and_rm_to_modrm(mod, reg, rm));
+            out.push_back(scale_and_index_and_base_to_sib(scale, index, base));
+
+            // Append the disp
+            if (memory_arg->data.memory.disp == 0) {
+                // no disp
+            } else if (-128 <= memory_arg->data.memory.disp && memory_arg->data.memory.disp <= 127) {
+                // disp8
+                out.push_back(memory_arg->data.memory.disp);
+            } else {
+                i32 disp = memory_arg->data.memory.disp;
+                out.push_back(disp & 0xFF);
+                disp >>= 8;
+                out.push_back(disp & 0xFF);
+                disp >>= 8;
+                out.push_back(disp & 0xFF);
+                disp >>= 8;
+                out.push_back(disp & 0xFF);
+            }
         }
     }
 
@@ -217,8 +393,10 @@ namespace assembly {
             }
         } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Memory &&
                    mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register) {
-            // TODO: implement mov to memory and from memory
-            throw std::exception();
+            assemble_memory_mnemo(out, mnemo, 0x88, 0x89);
+        } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register &&
+                   mnemo.a2.tag == mnemo_t::arg_t::tag_t::Memory) {
+            assemble_memory_mnemo(out, mnemo, 0x8a, 0x8b);
         } else {
             throw std::logic_error("Unsupported mov shape!");
         }

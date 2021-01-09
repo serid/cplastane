@@ -47,6 +47,7 @@ namespace assembly {
                 enum class scale_t {
                     Undef,
                     S0,
+                    S1,
                     S2,
                     S4,
                     S8,
