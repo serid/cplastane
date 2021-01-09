@@ -32,7 +32,13 @@ namespace assembly {
             struct memory_t {
                 reg_t base;
                 reg_t index;
-                u8 scale;
+                enum class scale_t {
+                    Undef,
+                    S0,
+                    S2,
+                    S4,
+                    S8,
+                } scale;
                 i32 disp;
             };
 
