@@ -29,6 +29,12 @@ namespace assembly {
                 Rcx,
                 Rdx,
             };
+            struct memory_t {
+                reg_t base;
+                reg_t index;
+                u8 scale;
+                i32 disp;
+            };
 
             enum class tag_t {
                 Undef,
@@ -36,15 +42,10 @@ namespace assembly {
                 Register,
                 Memory,
             } tag;
-            union data_t {
+            union {
                 i64 imm;
                 reg_t reg;
-                struct memory_t {
-                    reg_t base;
-                    reg_t index;
-                    u8 scale;
-                    i32 disp;
-                } memory;
+                memory_t memory;
             } data;
         };
 
