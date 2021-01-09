@@ -232,26 +232,43 @@ namespace test {
                         }
                 }},
 
-                // Simple `mov mem reg` test. Second mov superimposes value on a previous value.
+
+                // Simple `mov mem reg` test without SIB. Second mov superimposes value on a previous value.
+                // Saving rbp is neccesary to use rbp as a stack pointer register which is needed because
+                // rsp can not be encoded without SIB.
                 // TODO: expand test to cover every register and register width
-                // mov ebx, 0 ; dummy value used to force SIB variant adressing
+                // mov rcx, rbp ; save rbp
+                // mov rbp, rsp ; enter
                 // mov rax, 0x0f0f0f0f0f0f0f0f
-                // mov [rbx*8 + rsp - 8], rax
+                // mov [rbp - 8], rax
                 // mov al, 0
-                // mov [rbx*8 + rsp - 8], al
-                // mov rax, [rbx*8 + rsp - 8]
+                // mov [rbp - 8], al
+                // mov rax, [rbp - 8]
+                // mov rbp, rcx ; restore rbp
                 // ret
-                {.name="`mov mem reg`", .expected_result=0x0f0f0f0f0f0f0f00, .mnemos={
+                {.name="`mov mem reg` without SIB", .expected_result=0x0f0f0f0f0f0f0f00, .mnemos={
                         {
                                 .tag = mnemo_t::tag_t::Mov,
-                                .width = mnemo_t::width_t::Dword,
+                                .width = mnemo_t::width_t::Qword,
                                 .a1 = {
                                         .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Ecx}
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rcx}
                                 },
                                 .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 0}
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rbp}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Mov,
+                                .width = mnemo_t::width_t::Qword,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rbp}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rsp}
                                 },
                         },
                         {
@@ -271,7 +288,7 @@ namespace test {
                                 .width = mnemo_t::width_t::Qword,
                                 .a1 = {
                                         .tag = mnemo_t::arg_t::tag_t::Memory,
-                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rsp, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S8, .disp=-8}}
+                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rbp, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=-8}}
                                 },
                                 .a2 = {
                                         .tag = mnemo_t::arg_t::tag_t::Register,
@@ -295,7 +312,7 @@ namespace test {
                                 .width = mnemo_t::width_t::Byte,
                                 .a1 = {
                                         .tag = mnemo_t::arg_t::tag_t::Memory,
-                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rsp, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S8, .disp=-8}}
+                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rbp, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=-8}}
                                 },
                                 .a2 = {
                                         .tag = mnemo_t::arg_t::tag_t::Register,
@@ -311,7 +328,95 @@ namespace test {
                                 },
                                 .a2 = {
                                         .tag = mnemo_t::arg_t::tag_t::Memory,
-                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rsp, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S8, .disp=-8}}
+                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rbp, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=-8}}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Mov,
+                                .width = mnemo_t::width_t::Qword,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rbp}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rcx}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Ret,
+                                .width = mnemo_t::width_t::NotSet,
+                        }
+                }},
+
+
+                // Simple `mov mem reg` test with SIB. Second mov superimposes value on a previous value.
+                // TODO: expand test to cover every register and register width
+                // mov rax, 0x0f0f0f0f0f0f0f0f
+                // mov [rsp - 8], rax
+                // mov al, 0
+                // mov [rsp - 8], al
+                // mov rax, [rsp - 8]
+                // ret
+                {.name="`mov mem reg` with SIB", .expected_result=0x0f0f0f0f0f0f0f00, .mnemos={
+                        {
+                                .tag = mnemo_t::tag_t::Mov,
+                                .width = mnemo_t::width_t::Qword,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rax}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
+                                        .data = {.imm = 0x0f0f0f0f0f0f0f0f}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Mov,
+                                .width = mnemo_t::width_t::Qword,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Memory,
+                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rsp, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=-8}}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rax}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Mov,
+                                .width = mnemo_t::width_t::Byte,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Al}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
+                                        .data = {.imm = 0}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Mov,
+                                .width = mnemo_t::width_t::Byte,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Memory,
+                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rsp, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=-8}}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Al}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Mov,
+                                .width = mnemo_t::width_t::Qword,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rax}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Memory,
+                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rsp, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=-8}}
                                 },
                         },
                         {

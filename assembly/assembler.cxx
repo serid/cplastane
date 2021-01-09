@@ -207,35 +207,42 @@ namespace assembly {
             throw std::logic_error("Unexpected mnemo shape @ assemble_memory_mnemo");
         }
 
-        push_ASOR_if_dword(out, memory_arg->data.memory);
-
         u8 opcode = pick_opcode_byte_or_else(mnemo, opcode1, opcode2);
         u8 reg = reg_to_number(register_arg->data.reg);
         u8 mod;
         u8 rm;
 
+        u8 scale;
+        u8 index;
+        u8 base;
+
         // Fill in "mod" and "rm"
-        {
-            // This algorithm will always encodes the instruction using SIB byte. This is suboptimal since
-            // mov [eax], eax
-            // can be encoded without the SIB byte, using simple modrm form.
-            // TODO: implement simple modrm adressing
 
-            u8 scale;
-            u8 index;
-            u8 base;
+        // Choose disp size
+        if (memory_arg->data.memory.disp == 0) {
+            // no disp
+            mod = 0b00;
+        } else if (-128 <= memory_arg->data.memory.disp && memory_arg->data.memory.disp <= 127) {
+            // disp8
+            mod = 0b01;
+        } else {
+            // disp32
+            mod = 0b10;
+        }
 
-            // Choose disp size
-            if (memory_arg->data.memory.disp == 0) {
-                // no disp
-                mod = 0b00;
-            } else if (-128 <= memory_arg->data.memory.disp && memory_arg->data.memory.disp <= 127) {
-                // disp8
-                mod = 0b01;
-            } else {
-                // disp32
-                mod = 0b10;
-            }
+        // Short address form does not allow using "index"/"scale" or using "esp"/"rsp" as a base register.
+        // It also disallows using "ebp" base without offset.
+        bool is_short = (memory_arg->data.memory.scale == mnemo_t::arg_t::memory_t::scale_t::S0 &&
+                         memory_arg->data.memory.base != mnemo_t::arg_t::reg_t::Esp &&
+                         memory_arg->data.memory.base != mnemo_t::arg_t::reg_t::Rsp) ||
+                        (mod == 0b00 && memory_arg->data.memory.base != mnemo_t::arg_t::reg_t::Rbp);
+
+        if (is_short) {
+            // Encode addressing without SIB byte
+
+            rm = reg_to_number(memory_arg->data.memory.base);
+        } else {
+            // Encode addressing using SIB byte
 
             // Use SIB
             rm = 0b100;
@@ -246,12 +253,11 @@ namespace assembly {
             // Instead that bit combination means no base ([scaled index] + disp32).
             // (00 xxx 100) (xx xxx 101)
             // mod reg rm    ss index base
-
+            //
             // NOTE: Also, SIB adressing does not allow to use ESP as index.
             // Instead that bit combination means no index ([base] + dispxx). scale has no effect in this case
             // (xx xxx 100) (nn 100 xxx)
             // mod reg rm    ss index base
-
             if ((mod == 0b00 && memory_arg->data.memory.base == mnemo_t::arg_t::reg_t::Ebp) ||
                 memory_arg->data.memory.index == mnemo_t::arg_t::reg_t::Esp) {
                 throw std::logic_error("Bruh");
@@ -267,29 +273,33 @@ namespace assembly {
                 index = reg_to_number(memory_arg->data.memory.index);
             }
             base = reg_to_number(memory_arg->data.memory.base);
+        }
 
-            push_OSOR_if_word(out, mnemo);
-            push_rex_if_qword(out, mnemo);
-            out.push_back(opcode);
-            out.push_back(mod_and_reg_and_rm_to_modrm(mod, reg, rm));
+        push_ASOR_if_dword(out, memory_arg->data.memory);
+        push_OSOR_if_word(out, mnemo);
+        push_rex_if_qword(out, mnemo);
+        out.push_back(opcode);
+        out.push_back(mod_and_reg_and_rm_to_modrm(mod, reg, rm));
+
+        if (!is_short) {
             out.push_back(scale_and_index_and_base_to_sib(scale, index, base));
+        }
 
-            // Append the disp
-            if (memory_arg->data.memory.disp == 0) {
-                // no disp
-            } else if (-128 <= memory_arg->data.memory.disp && memory_arg->data.memory.disp <= 127) {
-                // disp8
-                out.push_back(memory_arg->data.memory.disp);
-            } else {
-                i32 disp = memory_arg->data.memory.disp;
-                out.push_back(disp & 0xFF);
-                disp >>= 8;
-                out.push_back(disp & 0xFF);
-                disp >>= 8;
-                out.push_back(disp & 0xFF);
-                disp >>= 8;
-                out.push_back(disp & 0xFF);
-            }
+        // Append the disp
+        if (memory_arg->data.memory.disp == 0) {
+            // no disp
+        } else if (-128 <= memory_arg->data.memory.disp && memory_arg->data.memory.disp <= 127) {
+            // disp8
+            out.push_back(memory_arg->data.memory.disp);
+        } else {
+            i32 disp = memory_arg->data.memory.disp;
+            out.push_back(disp & 0xFF);
+            disp >>= 8;
+            out.push_back(disp & 0xFF);
+            disp >>= 8;
+            out.push_back(disp & 0xFF);
+            disp >>= 8;
+            out.push_back(disp & 0xFF);
         }
     }
 
