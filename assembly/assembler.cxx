@@ -98,14 +98,15 @@ namespace assembly {
         return (mod << 6) | (reg << 3) | (rm << 0);
     }
 
-    // Put a operand-size override prefix if instruction width = word
+    // Put an "operand-size override" prefix if operand width = word
+    // In 64 bit mode switches operand width from 32 bits to 16 bits
     static auto push_OSOR_if_word(vector<u8> &out, const mnemo_t &mnemo) -> void {
         if (mnemo.width == mnemo_t::width_t::Word) {
             out.push_back(0x66);
         }
     }
 
-    // Put a REX prefix if instruction width = qword
+    // Put a REX prefix if operand width = qword
     static auto push_rex_if_qword(vector<u8> &out, const mnemo_t &mnemo) -> void {
         if (mnemo.width == mnemo_t::width_t::Qword) {
             out.push_back(0b01001000);
