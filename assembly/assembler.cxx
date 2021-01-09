@@ -124,7 +124,8 @@ namespace assembly {
     // In 64 bit mode switches address width from 64 bits to 32 bits
     static auto push_ASOR_if_dword(vector<u8> &out, const mnemo_t::arg_t::memory_t &memory_field) -> void {
         if (register_width(memory_field.index) != register_width(memory_field.base)) {
-            throw std::logic_error("Assertion failed: index and base fields have differing widths @ push_ASOR_if_dword");
+            throw std::logic_error(
+                    "Assertion failed: index and base fields have differing widths @ push_ASOR_if_dword");
         }
         if (register_width(memory_field.base) == mnemo_t::width_t::Dword) {
             out.push_back(0x67);
@@ -251,7 +252,8 @@ namespace assembly {
             // (xx xxx 100) (nn 100 xxx)
             // mod reg rm    ss index base
 
-            if ((mod == 0b00 && memory_arg->data.memory.base == mnemo_t::arg_t::reg_t::Ebp) || memory_arg->data.memory.index == mnemo_t::arg_t::reg_t::Esp) {
+            if ((mod == 0b00 && memory_arg->data.memory.base == mnemo_t::arg_t::reg_t::Ebp) ||
+                memory_arg->data.memory.index == mnemo_t::arg_t::reg_t::Esp) {
                 throw std::logic_error("Bruh");
                 // TODO: handle corner cases
             }
