@@ -18,16 +18,28 @@ namespace assembly {
             case mnemo_t::arg_t::reg_t::Bx:
             case mnemo_t::arg_t::reg_t::Cx:
             case mnemo_t::arg_t::reg_t::Dx:
+            case mnemo_t::arg_t::reg_t::Sp:
+            case mnemo_t::arg_t::reg_t::Bp:
+            case mnemo_t::arg_t::reg_t::Si:
+            case mnemo_t::arg_t::reg_t::Di:
                 return mnemo_t::width_t::Word;
             case mnemo_t::arg_t::reg_t::Eax:
             case mnemo_t::arg_t::reg_t::Ebx:
             case mnemo_t::arg_t::reg_t::Ecx:
             case mnemo_t::arg_t::reg_t::Edx:
+            case mnemo_t::arg_t::reg_t::Esp:
+            case mnemo_t::arg_t::reg_t::Ebp:
+            case mnemo_t::arg_t::reg_t::Esi:
+            case mnemo_t::arg_t::reg_t::Edi:
                 return mnemo_t::width_t::Dword;
             case mnemo_t::arg_t::reg_t::Rax:
             case mnemo_t::arg_t::reg_t::Rbx:
             case mnemo_t::arg_t::reg_t::Rcx:
             case mnemo_t::arg_t::reg_t::Rdx:
+            case mnemo_t::arg_t::reg_t::Rsp:
+            case mnemo_t::arg_t::reg_t::Rbp:
+            case mnemo_t::arg_t::reg_t::Rsi:
+            case mnemo_t::arg_t::reg_t::Rdi:
                 return mnemo_t::width_t::Qword;
             default:
                 throw std::logic_error("Unsupported register! register_width");
@@ -58,12 +70,24 @@ namespace assembly {
             case mnemo_t::arg_t::reg_t::Rbx:
                 return 0b011;
             case mnemo_t::arg_t::reg_t::Ah:
+            case mnemo_t::arg_t::reg_t::Sp:
+            case mnemo_t::arg_t::reg_t::Esp:
+            case mnemo_t::arg_t::reg_t::Rsp:
                 return 0b100;
             case mnemo_t::arg_t::reg_t::Ch:
+            case mnemo_t::arg_t::reg_t::Bp:
+            case mnemo_t::arg_t::reg_t::Ebp:
+            case mnemo_t::arg_t::reg_t::Rbp:
                 return 0b101;
             case mnemo_t::arg_t::reg_t::Dh:
+            case mnemo_t::arg_t::reg_t::Si:
+            case mnemo_t::arg_t::reg_t::Esi:
+            case mnemo_t::arg_t::reg_t::Rsi:
                 return 0b110;
             case mnemo_t::arg_t::reg_t::Bh:
+            case mnemo_t::arg_t::reg_t::Di:
+            case mnemo_t::arg_t::reg_t::Edi:
+            case mnemo_t::arg_t::reg_t::Rdi:
                 return 0b111;
             default:
                 throw std::logic_error("Unsupported register!");
