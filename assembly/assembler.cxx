@@ -146,6 +146,20 @@ namespace assembly {
         }
     }
 
+    // Returns opcode1 if mnemo.width == byte, else returns opcode2
+    static auto pick_opcode_byte_or_else(const mnemo_t &mnemo, u8 opcode1, u8 opcode2) -> u8 {
+        switch (mnemo.width) {
+            case mnemo_t::width_t::Byte:
+                return opcode1;
+            case mnemo_t::width_t::Word:
+            case mnemo_t::width_t::Dword:
+            case mnemo_t::width_t::Qword:
+                return opcode2;
+            default:
+                throw std::logic_error("Unsupported width!");
+        }
+    }
+
     // A template for a mnemo which operates on memory.
     // These mnemos are encoded in the same way and the only difference is opcodes.
     // opcode1 -- opcode for a byte-wise operation
@@ -194,19 +208,7 @@ namespace assembly {
 
         push_ASOR_if_dword(out, memory_arg->data.memory);
 
-        u8 opcode;
-        switch (mnemo.width) {
-            case mnemo_t::width_t::Byte:
-                opcode = opcode1;
-                break;
-            case mnemo_t::width_t::Word:
-            case mnemo_t::width_t::Dword:
-            case mnemo_t::width_t::Qword:
-                opcode = opcode2;
-                break;
-            default:
-                throw std::logic_error("Unsupported width!");
-        }
+        u8 opcode = pick_opcode_byte_or_else(mnemo, opcode1, opcode2);
         u8 reg = reg_to_number(register_arg->data.reg);
         u8 mod;
         u8 rm;
@@ -295,21 +297,7 @@ namespace assembly {
 
         if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register &&
             mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register) {
-            u8 opcode;
-            switch (mnemo.width) {
-                case mnemo_t::width_t::Byte:
-                    // mov r/m8, r8
-                    opcode = 0x88;
-                    break;
-                case mnemo_t::width_t::Word:
-                case mnemo_t::width_t::Dword:
-                case mnemo_t::width_t::Qword:
-                    // mov r/m32, r32
-                    opcode = 0x89;
-                    break;
-                default:
-                    throw std::logic_error("Unsupported width!");
-            }
+            u8 opcode = pick_opcode_byte_or_else(mnemo, 0x88, 0x89);
             u8 mod = 0b11;
             u8 rm = reg_to_number(mnemo.a1.data.reg);
             u8 reg = reg_to_number(mnemo.a2.data.reg);
@@ -320,21 +308,7 @@ namespace assembly {
             out.push_back(mod_and_reg_and_rm_to_modrm(mod, reg, rm));
         } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register &&
                    mnemo.a2.tag == mnemo_t::arg_t::tag_t::Immediate) {
-            u8 opcode;
-            switch (mnemo.width) {
-                case mnemo_t::width_t::Byte:
-                    // mov r8, imm8
-                    opcode = 0xb0;
-                    break;
-                case mnemo_t::width_t::Word:
-                case mnemo_t::width_t::Dword:
-                case mnemo_t::width_t::Qword:
-                    // mov r32, imm32
-                    opcode = 0xb8;
-                    break;
-                default:
-                    throw std::logic_error("Unsupported width!");
-            }
+            u8 opcode = pick_opcode_byte_or_else(mnemo, 0xb0, 0xb8);
             opcode += reg_to_number(mnemo.a1.data.reg);
 
             push_OSOR_if_word(out, mnemo);
