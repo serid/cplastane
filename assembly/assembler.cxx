@@ -96,10 +96,10 @@ namespace assembly {
     }
 
     // scale_t::S0 should be handled outside this function since it is not encoded with SS with but rather with Index bits equal to 0b100
-    static auto scale_to_byte(mnemo_t::arg_t::memory_t::scale_t scale) -> u8 {
+    static auto scale_to_num(mnemo_t::arg_t::memory_t::scale_t scale) -> u8 {
         switch (scale) {
             case mnemo_t::arg_t::memory_t::scale_t::S0:
-                throw std::logic_error("Unexpected scale_t::S0 @ scale_to_byte");
+                throw std::logic_error("Unexpected scale_t::S0 @ scale_to_num");
             case mnemo_t::arg_t::memory_t::scale_t::S1:
                 return 0b00;
             case mnemo_t::arg_t::memory_t::scale_t::S2:
@@ -302,7 +302,7 @@ namespace assembly {
                 scale = 0b00; // In fact it can have any value
                 index = 0b100;
             } else {
-                scale = scale_to_byte(memory.scale);
+                scale = scale_to_num(memory.scale);
                 index = reg_to_number(memory.index);
             }
             base = reg_to_number(memory.base);

@@ -11,7 +11,7 @@ namespace test {
     /// Test options. Combine with bitwise-or
     enum test_opt_t {
         NONE = 0,
-        CHECK_BYTES = 0b1, // Check assembly result against expected_bytes.
+        CHECK_BYTECODE = 0b1, // Check assembly result against expected_bytecode.
         RUN = 0b10, // Run assembly result.
         CHECK_EXEC_RESULT = 0b100, // Check result of running against expected_exec_result. Implies RUN.
     };
@@ -20,33 +20,33 @@ namespace test {
         string name;
         u8 test_opt;
         i64 expected_exec_result;
-        vector<u8> expected_bytes;
+        vector<u8> expected_bytecode;
         vector<mnemo_t> mnemos;
     };
 
     static auto test_func(const test_t &x_test) -> bool {
         std::cout << ">> Test \"" << x_test.name << "\".\n";
 
-        vector<u8> bytes = assemble(x_test.mnemos);
+        vector<u8> bytecode = assemble(x_test.mnemos);
 
-        if ((x_test.test_opt & CHECK_BYTES) != 0) {
-            if (bytes == x_test.expected_bytes) {
-                std::cout << "[+] Bytes check successful.\n";
-                std::cout << "Bytes: [";
-                for (const u8 &n:bytes) {
+        if ((x_test.test_opt & CHECK_BYTECODE) != 0) {
+            if (bytecode == x_test.expected_bytecode) {
+                std::cout << "[+] Bytecode check successful.\n";
+                std::cout << "Bytecode: [";
+                for (const u8 &n:bytecode) {
                     std::cout << std::hex << i32(n >> 4) << i32(n & 0x0f) << std::dec << ", ";
                 }
                 std::cout << "].\n";
             } else {
-                std::cout << "[/] Bytes check failed.\n";
-                std::cout << "Expected bytes: [";
-                for (const u8 &n:x_test.expected_bytes) {
+                std::cout << "[/] Bytecode check failed.\n";
+                std::cout << "Expected bytecode: [";
+                for (const u8 &n:x_test.expected_bytecode) {
                     std::cout << std::hex << i32(n >> 4) << i32(n & 0x0f) << std::dec << ", ";
                 }
                 std::cout << "].\n";
 
-                std::cout << "Actual bytes: [";
-                for (const u8 &n:bytes) {
+                std::cout << "Actual bytecode: [";
+                for (const u8 &n:bytecode) {
                     std::cout << std::hex << i32(n >> 4) << i32(n & 0x0f) << std::dec << ", ";
                 }
                 std::cout << "].\n";
@@ -56,7 +56,7 @@ namespace test {
         }
 
         if ((x_test.test_opt & RUN) != 0) {
-            i64 result = jit::eval_mc(bytes.data(), bytes.size());
+            i64 result = jit::eval_mc(bytecode.data(), bytecode.size());
 
             if ((x_test.test_opt & CHECK_EXEC_RESULT) != 0) {
                 if (result == x_test.expected_exec_result) {
@@ -211,11 +211,14 @@ namespace test {
                 // mov ecx, 0x0a0a
                 // mov cx, dx
                 // mov cl, dl
-                {.name="`mov` bytecode test", .test_opt=CHECK_BYTES, .expected_bytes={0x48, 0xb9, 0x0f, 0x0f, 0x0f,
-                                                                                      0x0f, 0x0f, 0x0f, 0x0f, 0x0f,
-                                                                                      0xb9, 0x0a, 0x0a, 0x00, 0x00,
-                                                                                      0x66, 0x89, 0xd1, 0x88,
-                                                                                      0xd1}, .mnemos={
+                {.name="`mov` bytecode test", .test_opt=CHECK_BYTECODE, .expected_bytecode={0x48, 0xb9, 0x0f, 0x0f,
+                                                                                            0x0f,
+                                                                                            0x0f, 0x0f, 0x0f, 0x0f,
+                                                                                            0x0f,
+                                                                                            0xb9, 0x0a, 0x0a, 0x00,
+                                                                                            0x00,
+                                                                                            0x66, 0x89, 0xd1, 0x88,
+                                                                                            0xd1}, .mnemos={
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
@@ -508,12 +511,16 @@ namespace test {
                 // push [esi+eax*4-10]
                 // pop rbx
                 // pop [esi+eax*4-10]
-                {.name="`push/pop` bytes multitest", .test_opt=CHECK_BYTES, .expected_bytes={0x53, 0x6a, 0x64, 0x68,
-                                                                                             0xe8, 0x03, 0x00, 0x00,
-                                                                                             0x67, 0xff, 0x74, 0x86,
-                                                                                             0xf6, 0x5b, 0x67, 0x8f,
-                                                                                             0x44, 0x86,
-                                                                                             0xf6}, .mnemos={
+                {.name="`push/pop` bytecode multitest", .test_opt=CHECK_BYTECODE, .expected_bytecode={0x53, 0x6a, 0x64,
+                                                                                                      0x68,
+                                                                                                      0xe8, 0x03, 0x00,
+                                                                                                      0x00,
+                                                                                                      0x67, 0xff, 0x74,
+                                                                                                      0x86,
+                                                                                                      0xf6, 0x5b, 0x67,
+                                                                                                      0x8f,
+                                                                                                      0x44, 0x86,
+                                                                                                      0xf6}, .mnemos={
                         {
                                 .tag = mnemo_t::tag_t::Push,
                                 .width = mnemo_t::width_t::Qword,
