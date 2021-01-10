@@ -161,6 +161,95 @@ namespace assembly {
         }
     }
 
+    struct assemble_memory_mnemo_result {
+        u8 mod;
+        u8 rm;
+        u8 sib;
+        bool sib_eh; // Indicates whether sib was returned. SIB is not returned for short form memory adressing and returned for long form.
+    };
+
+    static auto assemble_memory_mnemo(const mnemo_t::arg_t::memory_t &memory) -> assemble_memory_mnemo_result {
+        u8 mod;
+        u8 rm;
+
+        u8 scale;
+        u8 index;
+        u8 base;
+
+        // Fill in "mod" and "rm"
+
+        // Choose disp size
+        if (memory.disp == 0) {
+            // no disp
+            mod = 0b00;
+        } else if (-128 <= memory.disp && memory.disp <= 127) {
+            // disp8
+            mod = 0b01;
+        } else {
+            // disp32
+            mod = 0b10;
+        }
+
+        // Short address form does not allow using "index"/"scale" or using "esp"/"rsp" as a base register.
+        // It also disallows using "ebp" base without offset.
+        bool is_short = (memory.scale == mnemo_t::arg_t::memory_t::scale_t::S0 &&
+                         memory.base != mnemo_t::arg_t::reg_t::Esp &&
+                         memory.base != mnemo_t::arg_t::reg_t::Rsp) ||
+                        (mod == 0b00 && memory.base != mnemo_t::arg_t::reg_t::Rbp);
+
+        if (is_short) {
+            // Encode addressing without SIB byte
+
+            rm = reg_to_number(memory.base);
+        } else {
+            // Encode addressing using SIB byte
+
+            // Use SIB
+            rm = 0b100;
+
+            // Fill in SIB
+
+            // NOTE: Put simply, SIB adressing does not allow to adress [scaled index] + [EBP].
+            // Instead that bit combination means no base ([scaled index] + disp32).
+            // (00 xxx 100) (xx xxx 101)
+            // mod reg rm    ss index base
+            //
+            // NOTE: Also, SIB adressing does not allow to use ESP as index.
+            // Instead that bit combination means no index ([base] + dispxx). scale has no effect in this case
+            // (xx xxx 100) (nn 100 xxx)
+            // mod reg rm    ss index base
+            if ((mod == 0b00 && memory.base == mnemo_t::arg_t::reg_t::Ebp) ||
+                memory.index == mnemo_t::arg_t::reg_t::Esp) {
+                throw std::logic_error("Bruh");
+                // TODO: handle corner cases
+            }
+
+            // Handle scale_t::S0 edge case
+            if (memory.scale == mnemo_t::arg_t::memory_t::scale_t::S0) {
+                scale = 0b00; // In fact it can have any value
+                index = 0b100;
+            } else {
+                scale = scale_to_byte(memory.scale);
+                index = reg_to_number(memory.index);
+            }
+            base = reg_to_number(memory.base);
+        }
+
+        assemble_memory_mnemo_result result;
+        result.mod = mod;
+        result.rm = rm;
+
+        if (is_short) {
+            result.sib = 0b11111111; // Should not be used
+            result.sib_eh = false;
+        } else {
+            result.sib = scale_and_index_and_base_to_sib(scale, index, base);
+            result.sib_eh = true;
+        }
+
+        return result;
+    }
+
     // A template for a mnemo which operates on memory.
     // These mnemos are encoded in the same way and the only difference is opcodes.
     // opcode1 -- opcode for a byte-wise operation
@@ -192,7 +281,7 @@ namespace assembly {
     // For example:
     // mov r/m32 r32 ; MR
     // mov r32 r/m32 ; RM
-    static auto assemble_memory_mnemo(vector<u8> &out, const mnemo_t &mnemo, u8 opcode1, u8 opcode2) -> void {
+    static auto assemble_memory_mnemos_template(vector<u8> &out, const mnemo_t &mnemo, u8 opcode1, u8 opcode2) -> void {
         const mnemo_t::arg_t *memory_arg;
         const mnemo_t::arg_t *register_arg;
         if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Memory && mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register) {
@@ -209,80 +298,16 @@ namespace assembly {
 
         u8 opcode = pick_opcode_byte_or_else(mnemo.width, opcode1, opcode2);
         u8 reg = reg_to_number(register_arg->data.reg);
-        u8 mod;
-        u8 rm;
 
-        u8 scale;
-        u8 index;
-        u8 base;
-
-        // Fill in "mod" and "rm"
-
-        // Choose disp size
-        if (memory_arg->data.memory.disp == 0) {
-            // no disp
-            mod = 0b00;
-        } else if (-128 <= memory_arg->data.memory.disp && memory_arg->data.memory.disp <= 127) {
-            // disp8
-            mod = 0b01;
-        } else {
-            // disp32
-            mod = 0b10;
-        }
-
-        // Short address form does not allow using "index"/"scale" or using "esp"/"rsp" as a base register.
-        // It also disallows using "ebp" base without offset.
-        bool is_short = (memory_arg->data.memory.scale == mnemo_t::arg_t::memory_t::scale_t::S0 &&
-                         memory_arg->data.memory.base != mnemo_t::arg_t::reg_t::Esp &&
-                         memory_arg->data.memory.base != mnemo_t::arg_t::reg_t::Rsp) ||
-                        (mod == 0b00 && memory_arg->data.memory.base != mnemo_t::arg_t::reg_t::Rbp);
-
-        if (is_short) {
-            // Encode addressing without SIB byte
-
-            rm = reg_to_number(memory_arg->data.memory.base);
-        } else {
-            // Encode addressing using SIB byte
-
-            // Use SIB
-            rm = 0b100;
-
-            // Fill in SIB
-
-            // NOTE: Put simply, SIB adressing does not allow to adress [scaled index] + [EBP].
-            // Instead that bit combination means no base ([scaled index] + disp32).
-            // (00 xxx 100) (xx xxx 101)
-            // mod reg rm    ss index base
-            //
-            // NOTE: Also, SIB adressing does not allow to use ESP as index.
-            // Instead that bit combination means no index ([base] + dispxx). scale has no effect in this case
-            // (xx xxx 100) (nn 100 xxx)
-            // mod reg rm    ss index base
-            if ((mod == 0b00 && memory_arg->data.memory.base == mnemo_t::arg_t::reg_t::Ebp) ||
-                memory_arg->data.memory.index == mnemo_t::arg_t::reg_t::Esp) {
-                throw std::logic_error("Bruh");
-                // TODO: handle corner cases
-            }
-
-            // Handle scale_t::S0 edge case
-            if (memory_arg->data.memory.scale == mnemo_t::arg_t::memory_t::scale_t::S0) {
-                scale = 0b00; // In fact it can have any value
-                index = 0b100;
-            } else {
-                scale = scale_to_byte(memory_arg->data.memory.scale);
-                index = reg_to_number(memory_arg->data.memory.index);
-            }
-            base = reg_to_number(memory_arg->data.memory.base);
-        }
+        assemble_memory_mnemo_result result = assemble_memory_mnemo(memory_arg->data.memory);
 
         push_ASOR_if_dword(out, memory_arg->data.memory);
         push_OSOR_if_word(out, mnemo.width);
         push_rex_if_qword(out, mnemo.width);
         out.push_back(opcode);
-        out.push_back(mod_and_reg_and_rm_to_modrm(mod, reg, rm));
-
-        if (!is_short) {
-            out.push_back(scale_and_index_and_base_to_sib(scale, index, base));
+        out.push_back(mod_and_reg_and_rm_to_modrm(result.mod, reg, result.rm));
+        if (result.sib_eh) {
+            out.push_back(result.sib);
         }
 
         // Append the disp
@@ -379,10 +404,10 @@ namespace assembly {
             }
         } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Memory &&
                    mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register) {
-            assemble_memory_mnemo(out, mnemo, 0x88, 0x89);
+            assemble_memory_mnemos_template(out, mnemo, 0x88, 0x89);
         } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register &&
                    mnemo.a2.tag == mnemo_t::arg_t::tag_t::Memory) {
-            assemble_memory_mnemo(out, mnemo, 0x8a, 0x8b);
+            assemble_memory_mnemos_template(out, mnemo, 0x8a, 0x8b);
         } else {
             throw std::logic_error("Unsupported mov shape!");
         }
