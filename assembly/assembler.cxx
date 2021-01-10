@@ -1,6 +1,7 @@
 #include "assembler.hxx"
 
 #include <stdexcept>
+#include <limits>
 
 namespace assembly {
     static auto register_width(mnemo_t::arg_t::reg_t reg) -> mnemo_t::width_t {
@@ -417,6 +418,35 @@ namespace assembly {
         } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register &&
                    mnemo.a2.tag == mnemo_t::arg_t::tag_t::Memory) {
             assemble_memory_mnemos_template(out, mnemo, 0x8a, 0x8b);
+        } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Memory &&
+                   mnemo.a2.tag == mnemo_t::arg_t::tag_t::Immediate) {
+            u8 opcode = pick_opcode_byte_or_else(mnemo.width, 0xc6, 0xc7);
+            u8 reg = 0;
+
+            assemble_memory_mnemo_result result = assemble_memory_mnemo(mnemo.a1.data.memory);
+
+            push_ASOR_if_dword(out, mnemo.a1.data.memory);
+            push_OSOR_if_word(out, mnemo.width);
+            push_rex_if_qword(out, mnemo.width);
+            out.push_back(opcode);
+            out.push_back(mod_and_reg_and_rm_to_modrm(result.mod, reg, result.rm));
+            if (result.sib_eh) {
+                out.push_back(result.sib);
+            }
+
+            append_disp(out, mnemo.a1.data.memory.disp);
+
+            // Write imm
+            mnemo_t::width_t width = mnemo.width;
+            // mov only allows imms up to 32 bits. 32 bit value will be sign-extended in memory to 64 bits
+            if (width == mnemo_t::width_t::Qword) {
+                width = mnemo_t::width_t::Dword;
+                // Assert user does not attempt to write 64 bit value to memory
+                if (mnemo.a2.data.imm > std::numeric_limits<int>::max())
+                    throw std::logic_error(
+                            "Attempted to write immediate 64 bit value in memory using mov @ assemble_mnemo_mov");
+            }
+            append_imm_upto_64(out, width, mnemo.a2.data.imm);
         } else {
             throw std::logic_error("Unsupported mov shape!");
         }
@@ -438,7 +468,8 @@ namespace assembly {
             case mnemo_t::arg_t::tag_t::Register: {
                 // In 64-bit mode, `push` and `pop` only accept 16-bit or 64-bit registers.
                 if (mnemo.width == mnemo_t::width_t::Dword) {
-                    throw std::logic_error(string("Unsupported register @ assemble_mnemo_") + (is_push ? "push" : "pop"));
+                    throw std::logic_error(
+                            string("Unsupported register @ assemble_mnemo_") + (is_push ? "push" : "pop"));
                 }
                 u8 opcode = is_push ? 0x50 : 0x58;
                 opcode += reg_to_number(mnemo.a1.data.reg);
@@ -450,7 +481,8 @@ namespace assembly {
             case mnemo_t::arg_t::tag_t::Memory: {
                 // In 64-bit mode, `push` and `pop` only accept 16-bit or 64-bit registers.
                 if (mnemo.width == mnemo_t::width_t::Dword) {
-                    throw std::logic_error(string("Unsupported register @ assemble_mnemo_") + (is_push ? "push" : "pop"));
+                    throw std::logic_error(
+                            string("Unsupported register @ assemble_mnemo_") + (is_push ? "push" : "pop"));
                 }
                 u8 opcode = is_push ? 0xff : 0x8f;
                 u8 reg = is_push ? 6 : 0;
@@ -488,7 +520,8 @@ namespace assembly {
             }
 
             default:
-                throw std::logic_error(string("Unsupported mnemo shape @ assemble_mnemo_") + (is_push ? "push" : "pop"));
+                throw std::logic_error(
+                        string("Unsupported mnemo shape @ assemble_mnemo_") + (is_push ? "push" : "pop"));
         }
     }
 

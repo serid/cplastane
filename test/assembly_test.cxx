@@ -571,6 +571,55 @@ namespace test {
                                 },
                         },
                 }},
+
+                // TODO: expand test to cover every register and register width
+                // mov QWORD [rsp - 8], 0x0f0f0f0f ; will be sign-extended to 64 bits
+                // mov BYTE [rsp - 8], 0
+                // mov rax, [rsp - 8]
+                // ret
+                {.name="`mov imm`", .test_opt=RUN |
+                                              CHECK_EXEC_RESULT, .expected_exec_result=0x0f0f0f00, .mnemos={
+                        {
+                                .tag = mnemo_t::tag_t::Mov,
+                                .width = mnemo_t::width_t::Qword,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Memory,
+                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rsp, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=-8}}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
+                                        .data = {.imm = 0x0f0f0f0f}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Mov,
+                                .width = mnemo_t::width_t::Byte,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Memory,
+                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rsp, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=-8}}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
+                                        .data = {.imm = 0}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Mov,
+                                .width = mnemo_t::width_t::Qword,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rax}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Memory,
+                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rsp, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=-8}}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Ret,
+                                .width = mnemo_t::width_t::NotSet,
+                        }
+                }},
         };
 
         u64 success_counter = 0;
