@@ -147,6 +147,78 @@ namespace assembly {
         }
     }
 
+    static auto append_disp(vector<u8> &out, i32 a_disp) -> void {
+        // Append the disp
+        if (a_disp == 0) {
+            // no disp
+        } else if (-128 <= a_disp && a_disp <= 127) {
+            // disp8
+            out.push_back(a_disp);
+        } else {
+            // disp32
+            i32 disp = a_disp;
+            out.push_back(disp & 0xff);
+            disp >>= 8;
+            out.push_back(disp & 0xff);
+            disp >>= 8;
+            out.push_back(disp & 0xff);
+            disp >>= 8;
+            out.push_back(disp & 0xff);
+        }
+    }
+
+    static auto append_imm_upto_64(vector<u8> &out, mnemo_t::width_t width, i64 a_imm) -> void {
+        switch (width) {
+            case mnemo_t::width_t::Byte: {
+                // Write i8
+                out.push_back(a_imm);
+                break;
+            }
+            case mnemo_t::width_t::Word: {
+                // Write LE i16
+                i16 imm = a_imm;
+                out.push_back(imm & 0xff);
+                imm >>= 8;
+                out.push_back(imm & 0xff);
+                break;
+            }
+            case mnemo_t::width_t::Dword: {
+                // Write LE i32
+                i32 imm = a_imm;
+                out.push_back(imm & 0xff);
+                imm >>= 8;
+                out.push_back(imm & 0xff);
+                imm >>= 8;
+                out.push_back(imm & 0xff);
+                imm >>= 8;
+                out.push_back(imm & 0xff);
+                break;
+            }
+            case mnemo_t::width_t::Qword: {
+                // Write LE i64
+                i64 imm = a_imm;
+                out.push_back(imm & 0xff);
+                imm >>= 8;
+                out.push_back(imm & 0xff);
+                imm >>= 8;
+                out.push_back(imm & 0xff);
+                imm >>= 8;
+                out.push_back(imm & 0xff);
+                imm >>= 8;
+                out.push_back(imm & 0xff);
+                imm >>= 8;
+                out.push_back(imm & 0xff);
+                imm >>= 8;
+                out.push_back(imm & 0xff);
+                imm >>= 8;
+                out.push_back(imm & 0xff);
+                break;
+            }
+            default:
+                throw std::logic_error("Unsupported width! @ append_imm_upto_64");
+        }
+    }
+
     // Returns opcode1 if mnemo.width == byte, else returns opcode2
     static auto pick_opcode_byte_or_else(mnemo_t::width_t width, u8 opcode1, u8 opcode2) -> u8 {
         switch (width) {
@@ -310,22 +382,7 @@ namespace assembly {
             out.push_back(result.sib);
         }
 
-        // Append the disp
-        if (memory_arg->data.memory.disp == 0) {
-            // no disp
-        } else if (-128 <= memory_arg->data.memory.disp && memory_arg->data.memory.disp <= 127) {
-            // disp8
-            out.push_back(memory_arg->data.memory.disp);
-        } else {
-            i32 disp = memory_arg->data.memory.disp;
-            out.push_back(disp & 0xFF);
-            disp >>= 8;
-            out.push_back(disp & 0xFF);
-            disp >>= 8;
-            out.push_back(disp & 0xFF);
-            disp >>= 8;
-            out.push_back(disp & 0xFF);
-        }
+        append_disp(out, memory_arg->data.memory.disp);
     }
 
     static auto assemble_mnemo_mov(vector<u8> &out, const mnemo_t &mnemo) -> void {
@@ -353,55 +410,7 @@ namespace assembly {
             out.push_back(opcode);
 
             // Write imm
-            switch (mnemo.width) {
-                case mnemo_t::width_t::Byte: {
-                    // Write i8
-                    out.push_back(mnemo.a2.data.imm);
-                    break;
-                }
-                case mnemo_t::width_t::Word: {
-                    // Write LE i16
-                    i16 imm = mnemo.a2.data.imm;
-                    out.push_back(imm & 0xFF);
-                    imm >>= 8;
-                    out.push_back(imm & 0xFF);
-                    break;
-                }
-                case mnemo_t::width_t::Dword: {
-                    // Write LE i32
-                    i32 imm = mnemo.a2.data.imm;
-                    out.push_back(imm & 0xFF);
-                    imm >>= 8;
-                    out.push_back(imm & 0xFF);
-                    imm >>= 8;
-                    out.push_back(imm & 0xFF);
-                    imm >>= 8;
-                    out.push_back(imm & 0xFF);
-                    break;
-                }
-                case mnemo_t::width_t::Qword: {
-                    // Write LE i64
-                    i64 imm = mnemo.a2.data.imm;
-                    out.push_back(imm & 0xFF);
-                    imm >>= 8;
-                    out.push_back(imm & 0xFF);
-                    imm >>= 8;
-                    out.push_back(imm & 0xFF);
-                    imm >>= 8;
-                    out.push_back(imm & 0xFF);
-                    imm >>= 8;
-                    out.push_back(imm & 0xFF);
-                    imm >>= 8;
-                    out.push_back(imm & 0xFF);
-                    imm >>= 8;
-                    out.push_back(imm & 0xFF);
-                    imm >>= 8;
-                    out.push_back(imm & 0xFF);
-                    break;
-                }
-                default:
-                    throw std::logic_error("Unsupported width! 1");
-            }
+            append_imm_upto_64(out, mnemo.width, mnemo.a2.data.imm);
         } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Memory &&
                    mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register) {
             assemble_memory_mnemos_template(out, mnemo, 0x88, 0x89);
@@ -455,22 +464,7 @@ namespace assembly {
                 if (result.sib_eh) {
                     out.push_back(result.sib);
                 }
-                // Append the disp
-                if (mnemo.a1.data.memory.disp == 0) {
-                    // no disp
-                } else if (-128 <= mnemo.a1.data.memory.disp && mnemo.a1.data.memory.disp <= 127) {
-                    // disp8
-                    out.push_back(mnemo.a1.data.memory.disp);
-                } else {
-                    i32 disp = mnemo.a1.data.memory.disp;
-                    out.push_back(disp & 0xFF);
-                    disp >>= 8;
-                    out.push_back(disp & 0xFF);
-                    disp >>= 8;
-                    out.push_back(disp & 0xFF);
-                    disp >>= 8;
-                    out.push_back(disp & 0xFF);
-                }
+                append_disp(out, mnemo.a1.data.memory.disp);
                 break;
             }
             case mnemo_t::arg_t::tag_t::Immediate: {
@@ -485,36 +479,11 @@ namespace assembly {
                 push_OSOR_if_word(out, mnemo.width);
                 out.push_back(opcode);
 
-                // Write imm
-                switch (mnemo.width) {
-                    case mnemo_t::width_t::Byte: {
-                        // Write i8
-                        out.push_back(mnemo.a1.data.imm);
-                        break;
-                    }
-                    case mnemo_t::width_t::Word: {
-                        // Write LE i16
-                        i16 imm = mnemo.a1.data.imm;
-                        out.push_back(imm & 0xFF);
-                        imm >>= 8;
-                        out.push_back(imm & 0xFF);
-                        break;
-                    }
-                    case mnemo_t::width_t::Dword: {
-                        // Write LE i32
-                        i32 imm = mnemo.a1.data.imm;
-                        out.push_back(imm & 0xFF);
-                        imm >>= 8;
-                        out.push_back(imm & 0xFF);
-                        imm >>= 8;
-                        out.push_back(imm & 0xFF);
-                        imm >>= 8;
-                        out.push_back(imm & 0xFF);
-                        break;
-                    }
-                    default:
-                        throw std::logic_error("Unsupported width! @ assemble_mnemo_push");
+                if (mnemo.width == mnemo_t::width_t::Qword) {
+                    throw std::logic_error("Unsupported width! @ assemble_mnemo_push");
                 }
+
+                append_imm_upto_64(out, mnemo.width, mnemo.a1.data.imm);
                 break;
             }
 
