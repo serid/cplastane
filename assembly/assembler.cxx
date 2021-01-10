@@ -330,19 +330,19 @@ namespace assembly {
     // Example:
     // mov mem, reg
     // is
-    // assemble_memory_mnemo(..., 0x88, 0x89)
+    // assemble_memory_mnemos_template(..., 0x88, 0x89)
     //
     // mov reg, mem
     // is
-    // assemble_memory_mnemo(..., 0x8a, 0x8b)
+    // assemble_memory_mnemos_template(..., 0x8a, 0x8b)
     //
     // add mem, reg
     // is
-    // assemble_memory_mnemo(..., 0x00, 0x01)
+    // assemble_memory_mnemos_template(..., 0x00, 0x01)
     //
     // add reg, mem
     // is
-    // assemble_memory_mnemo(..., 0x02, 0x03)
+    // assemble_memory_mnemos_template(..., 0x02, 0x03)
     //
     // cool isn't it question_mark
     //
@@ -365,7 +365,7 @@ namespace assembly {
             memory_arg = &mnemo.a2;
             register_arg = &mnemo.a1;
         } else {
-            throw std::logic_error("Unexpected mnemo shape @ assemble_memory_mnemo");
+            throw std::logic_error("Unexpected mnemo shape @ assemble_memory_mnemos_template");
         }
 
         u8 opcode = pick_opcode_byte_or_else(mnemo.width, opcode1, opcode2);
