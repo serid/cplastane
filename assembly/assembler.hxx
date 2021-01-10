@@ -71,6 +71,8 @@ namespace assembly {
         enum class tag_t {
             Undef,
             Mov,
+            Push,
+            Pop,
             Ret,
         } tag;
 

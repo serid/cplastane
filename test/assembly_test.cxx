@@ -424,6 +424,48 @@ namespace test {
                                 .width = mnemo_t::width_t::NotSet,
                         }
                 }},
+
+
+                // `push/pop` test.
+                // TODO: expand test to cover every register and register width
+                // mov rax, 0x0f0f0f0f0f0f0f0f
+                // push rax
+                // pop rax
+                // ret
+                {.name="`push/pop`", .expected_result=0x0f0f0f0f0f0f0f00, .mnemos={
+                        {
+                                .tag = mnemo_t::tag_t::Mov,
+                                .width = mnemo_t::width_t::Qword,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rcx}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
+                                        .data = {.imm = 0x0f0f0f0f0f0f0f00}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Push,
+                                .width = mnemo_t::width_t::Qword,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rcx}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Pop,
+                                .width = mnemo_t::width_t::Qword,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rax}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Ret,
+                                .width = mnemo_t::width_t::NotSet,
+                        }
+                }},
         };
 
         u64 success_counter = 0;

@@ -413,6 +413,116 @@ namespace assembly {
         }
     }
 
+    // `pop` operates similarly to `push` save for different opcodes and inability to accept immediate arguments.
+    // Based on this, I can unify two functions under a template, where argument chooses what operation to encode.
+    template<bool is_push>
+    static auto assemble_mnemo_push_pop_template(vector<u8> &out, const mnemo_t &mnemo) -> void {
+        if (is_push) {
+            if (mnemo.tag != mnemo_t::tag_t::Push)
+                throw std::logic_error("Wrong mnemo!");
+        } else {
+            if (mnemo.tag != mnemo_t::tag_t::Pop)
+                throw std::logic_error("Wrong mnemo!");
+        }
+
+        switch (mnemo.a1.tag) {
+            case mnemo_t::arg_t::tag_t::Register: {
+                // In 64-bit mode, `push` and `pop` only accept 16-bit or 64-bit registers.
+                if (mnemo.width == mnemo_t::width_t::Dword) {
+                    throw std::logic_error(string("Unsupported register @ assemble_mnemo_") + (is_push ? "push" : "pop"));
+                }
+                u8 opcode = is_push ? 0x50 : 0x58;
+                opcode += reg_to_number(mnemo.a1.data.reg);
+
+                push_OSOR_if_word(out, mnemo.width);
+                out.push_back(opcode);
+                break;
+            }
+            case mnemo_t::arg_t::tag_t::Memory: {
+                // In 64-bit mode, `push` and `pop` only accept 16-bit or 64-bit registers.
+                if (mnemo.width == mnemo_t::width_t::Dword) {
+                    throw std::logic_error(string("Unsupported register @ assemble_mnemo_") + (is_push ? "push" : "pop"));
+                }
+                u8 opcode = is_push ? 0xff : 0x8f;
+                u8 reg = is_push ? 6 : 0;
+
+                assemble_memory_mnemo_result result = assemble_memory_mnemo(mnemo.a1.data.memory);
+
+                push_ASOR_if_dword(out, mnemo.a1.data.memory);
+                push_OSOR_if_word(out, mnemo.width);
+                out.push_back(opcode);
+                out.push_back(mod_and_reg_and_rm_to_modrm(result.mod, reg, result.rm));
+                if (result.sib_eh) {
+                    out.push_back(result.sib);
+                }
+                // Append the disp
+                if (mnemo.a1.data.memory.disp == 0) {
+                    // no disp
+                } else if (-128 <= mnemo.a1.data.memory.disp && mnemo.a1.data.memory.disp <= 127) {
+                    // disp8
+                    out.push_back(mnemo.a1.data.memory.disp);
+                } else {
+                    i32 disp = mnemo.a1.data.memory.disp;
+                    out.push_back(disp & 0xFF);
+                    disp >>= 8;
+                    out.push_back(disp & 0xFF);
+                    disp >>= 8;
+                    out.push_back(disp & 0xFF);
+                    disp >>= 8;
+                    out.push_back(disp & 0xFF);
+                }
+                break;
+            }
+            case mnemo_t::arg_t::tag_t::Immediate: {
+                if (!is_push) {
+                    throw std::logic_error("Cannot `pop` into an immediate value.");
+                }
+
+                // Encode `push`
+
+                u8 opcode = pick_opcode_byte_or_else(mnemo.width, 0x6a, 0x68);
+
+                push_OSOR_if_word(out, mnemo.width);
+                out.push_back(opcode);
+
+                // Write imm
+                switch (mnemo.width) {
+                    case mnemo_t::width_t::Byte: {
+                        // Write i8
+                        out.push_back(mnemo.a1.data.imm);
+                        break;
+                    }
+                    case mnemo_t::width_t::Word: {
+                        // Write LE i16
+                        i16 imm = mnemo.a1.data.imm;
+                        out.push_back(imm & 0xFF);
+                        imm >>= 8;
+                        out.push_back(imm & 0xFF);
+                        break;
+                    }
+                    case mnemo_t::width_t::Dword: {
+                        // Write LE i32
+                        i32 imm = mnemo.a1.data.imm;
+                        out.push_back(imm & 0xFF);
+                        imm >>= 8;
+                        out.push_back(imm & 0xFF);
+                        imm >>= 8;
+                        out.push_back(imm & 0xFF);
+                        imm >>= 8;
+                        out.push_back(imm & 0xFF);
+                        break;
+                    }
+                    default:
+                        throw std::logic_error("Unsupported width! @ assemble_mnemo_push");
+                }
+                break;
+            }
+
+            default:
+                throw std::logic_error(string("Unsupported mnemo shape @ assemble_mnemo_") + (is_push ? "push" : "pop"));
+        }
+    }
+
     auto assemble_mnemo(vector<u8> &out, const mnemo_t &mnemo) -> void {
         if (mnemo.width != mnemo_t::width_t::Byte && mnemo.width != mnemo_t::width_t::Word &&
             mnemo.width != mnemo_t::width_t::Dword && mnemo.width != mnemo_t::width_t::Qword &&
@@ -428,6 +538,14 @@ namespace assembly {
         switch (mnemo.tag) {
             case mnemo_t::tag_t::Mov: {
                 assemble_mnemo_mov(out, mnemo);
+                break;
+            }
+            case mnemo_t::tag_t::Push: {
+                assemble_mnemo_push_pop_template<true>(out, mnemo);
+                break;
+            }
+            case mnemo_t::tag_t::Pop: {
+                assemble_mnemo_push_pop_template<false>(out, mnemo);
                 break;
             }
             case mnemo_t::tag_t::Ret: {
