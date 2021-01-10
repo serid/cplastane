@@ -134,22 +134,22 @@ namespace assembly {
 
     // Put an "operand-size override" prefix if operand width = word
     // In 64 bit mode switches operand width from 32 bits to 16 bits
-    static auto push_OSOR_if_word(vector<u8> &out, const mnemo_t &mnemo) -> void {
-        if (mnemo.width == mnemo_t::width_t::Word) {
+    static auto push_OSOR_if_word(vector<u8> &out, mnemo_t::width_t width) -> void {
+        if (width == mnemo_t::width_t::Word) {
             out.push_back(0x66);
         }
     }
 
     // Put a REX prefix if operand width = qword
-    static auto push_rex_if_qword(vector<u8> &out, const mnemo_t &mnemo) -> void {
-        if (mnemo.width == mnemo_t::width_t::Qword) {
+    static auto push_rex_if_qword(vector<u8> &out, mnemo_t::width_t width) -> void {
+        if (width == mnemo_t::width_t::Qword) {
             out.push_back(0b01001000);
         }
     }
 
     // Returns opcode1 if mnemo.width == byte, else returns opcode2
-    static auto pick_opcode_byte_or_else(const mnemo_t &mnemo, u8 opcode1, u8 opcode2) -> u8 {
-        switch (mnemo.width) {
+    static auto pick_opcode_byte_or_else(mnemo_t::width_t width, u8 opcode1, u8 opcode2) -> u8 {
+        switch (width) {
             case mnemo_t::width_t::Byte:
                 return opcode1;
             case mnemo_t::width_t::Word:
@@ -207,7 +207,7 @@ namespace assembly {
             throw std::logic_error("Unexpected mnemo shape @ assemble_memory_mnemo");
         }
 
-        u8 opcode = pick_opcode_byte_or_else(mnemo, opcode1, opcode2);
+        u8 opcode = pick_opcode_byte_or_else(mnemo.width, opcode1, opcode2);
         u8 reg = reg_to_number(register_arg->data.reg);
         u8 mod;
         u8 rm;
@@ -276,8 +276,8 @@ namespace assembly {
         }
 
         push_ASOR_if_dword(out, memory_arg->data.memory);
-        push_OSOR_if_word(out, mnemo);
-        push_rex_if_qword(out, mnemo);
+        push_OSOR_if_word(out, mnemo.width);
+        push_rex_if_qword(out, mnemo.width);
         out.push_back(opcode);
         out.push_back(mod_and_reg_and_rm_to_modrm(mod, reg, rm));
 
@@ -309,22 +309,22 @@ namespace assembly {
 
         if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register &&
             mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register) {
-            u8 opcode = pick_opcode_byte_or_else(mnemo, 0x88, 0x89);
+            u8 opcode = pick_opcode_byte_or_else(mnemo.width, 0x88, 0x89);
             u8 mod = 0b11;
             u8 rm = reg_to_number(mnemo.a1.data.reg);
             u8 reg = reg_to_number(mnemo.a2.data.reg);
 
-            push_OSOR_if_word(out, mnemo);
-            push_rex_if_qword(out, mnemo);
+            push_OSOR_if_word(out, mnemo.width);
+            push_rex_if_qword(out, mnemo.width);
             out.push_back(opcode);
             out.push_back(mod_and_reg_and_rm_to_modrm(mod, reg, rm));
         } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register &&
                    mnemo.a2.tag == mnemo_t::arg_t::tag_t::Immediate) {
-            u8 opcode = pick_opcode_byte_or_else(mnemo, 0xb0, 0xb8);
+            u8 opcode = pick_opcode_byte_or_else(mnemo.width, 0xb0, 0xb8);
             opcode += reg_to_number(mnemo.a1.data.reg);
 
-            push_OSOR_if_word(out, mnemo);
-            push_rex_if_qword(out, mnemo);
+            push_OSOR_if_word(out, mnemo.width);
+            push_rex_if_qword(out, mnemo.width);
             out.push_back(opcode);
 
             // Write imm
