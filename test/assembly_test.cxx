@@ -97,11 +97,10 @@ namespace test {
                         }
                 }},
 
-
                 // mov ecx, 0xff00
                 // mov eax, ecx
                 // ret
-                {.name="Reg mov test", .test_opt=RUN | CHECK_EXEC_RESULT, .expected_exec_result=0xff00, .mnemos={
+                {.name="`mov reg, reg`", .test_opt=RUN | CHECK_EXEC_RESULT, .expected_exec_result=0xff00, .mnemos={
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Dword,
@@ -133,12 +132,11 @@ namespace test {
 
                 }},
 
-
                 // mov rcx, 0x0f1f2f3f4f5f6f7f
                 // mov rax, rcx
                 // ret
-                {.name="64 bit reg mov test", .test_opt=RUN |
-                                                        CHECK_EXEC_RESULT, .expected_exec_result=0x0f1f2f3f4f5f6f7f, .mnemos={
+                {.name="`mov qword reg, reg`", .test_opt=RUN |
+                                                         CHECK_EXEC_RESULT, .expected_exec_result=0x0f1f2f3f4f5f6f7f, .mnemos={
                         {
                                 {
                                         .tag = mnemo_t::tag_t::Mov,
@@ -176,8 +174,8 @@ namespace test {
                 // mov rax, 0x0f0f0f0f0f0f0f0f
                 // mov al, 0
                 // ret
-                {.name="Byte-wise mov", .test_opt=RUN |
-                                                  CHECK_EXEC_RESULT, .expected_exec_result=0x0f0f0f0f0f0f0f00, .mnemos={
+                {.name="`mov byte reg, imm", .test_opt=RUN |
+                                                       CHECK_EXEC_RESULT, .expected_exec_result=0x0f0f0f0f0f0f0f00, .mnemos={
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
@@ -208,21 +206,22 @@ namespace test {
                         }
                 }},
 
-                // Simple `mov reg, reg` test.
-                // TODO: expand test to cover every register and register width
-                // mov rax, 0x0f0f0f0f0f0f0f0f
-                // mov cx, 0x0a0a
-                // mov dx, cx
-                // mov ax, dx
-                // ret
-                {.name="Byte-wise `mov reg, reg`", .test_opt=RUN |
-                                                             CHECK_EXEC_RESULT, .expected_exec_result=0x0f0f0f0f0f0f0a0a, .mnemos={
+                // bytecode test
+                // mov rcx, 0x0f0f0f0f0f0f0f0f
+                // mov ecx, 0x0a0a
+                // mov cx, dx
+                // mov cl, dl
+                {.name="`mov` bytecode test", .test_opt=CHECK_BYTES, .expected_bytes={0x48, 0xb9, 0x0f, 0x0f, 0x0f,
+                                                                                      0x0f, 0x0f, 0x0f, 0x0f, 0x0f,
+                                                                                      0xb9, 0x0a, 0x0a, 0x00, 0x00,
+                                                                                      0x66, 0x89, 0xd1, 0x88,
+                                                                                      0xd1}, .mnemos={
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
                                 .a1 = {
                                         .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rax}
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rcx}
                                 },
                                 .a2 = {
                                         .tag = mnemo_t::arg_t::tag_t::Immediate,
@@ -231,10 +230,10 @@ namespace test {
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
-                                .width = mnemo_t::width_t::Word,
+                                .width = mnemo_t::width_t::Dword,
                                 .a1 = {
                                         .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Cx}
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Ecx}
                                 },
                                 .a2 = {
                                         .tag = mnemo_t::arg_t::tag_t::Immediate,
@@ -246,36 +245,31 @@ namespace test {
                                 .width = mnemo_t::width_t::Word,
                                 .a1 = {
                                         .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Dx}
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Cx}
                                 },
                                 .a2 = {
                                         .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Cx}
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Dx}
                                 },
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
-                                .width = mnemo_t::width_t::Word,
+                                .width = mnemo_t::width_t::Byte,
                                 .a1 = {
                                         .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Ax}
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Cl}
                                 },
                                 .a2 = {
                                         .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Dx}
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Dl}
                                 },
                         },
-                        {
-                                .tag = mnemo_t::tag_t::Ret,
-                                .width = mnemo_t::width_t::NotSet,
-                        }
                 }},
-
 
                 // Simple `mov mem reg` test without SIB. Second mov superimposes value on a previous value.
                 // Saving rbp is neccesary to use rbp as a stack pointer register which is needed because
                 // rsp can not be encoded without SIB.
-                // TODO: expand test to cover every register and register width
+                //
                 // mov rcx, rbp ; save rbp
                 // mov rbp, rsp ; enter
                 // mov rax, 0x0f0f0f0f0f0f0f0f
@@ -389,9 +383,8 @@ namespace test {
                         }
                 }},
 
-
                 // Simple `mov mem reg` test with SIB. Second mov superimposes value on a previous value.
-                // TODO: expand test to cover every register and register width
+                //
                 // mov rax, 0x0f0f0f0f0f0f0f0f
                 // mov [rsp - 8], rax
                 // mov al, 0
@@ -466,9 +459,8 @@ namespace test {
                         }
                 }},
 
-
                 // `push/pop` test.
-                // TODO: expand test to cover every register and register width
+                //
                 // mov rax, 0x0f0f0f0f0f0f0f0f
                 // push rax
                 // pop rax
@@ -509,13 +501,13 @@ namespace test {
                         }
                 }},
 
+                // bytecode test
                 // push rbx
                 // push 100
                 // push 1000
                 // push [esi+eax*4-10]
                 // pop rbx
                 // pop [esi+eax*4-10]
-                // no ret
                 {.name="`push/pop` bytes multitest", .test_opt=CHECK_BYTES, .expected_bytes={0x53, 0x6a, 0x64, 0x68,
                                                                                              0xe8, 0x03, 0x00, 0x00,
                                                                                              0x67, 0xff, 0x74, 0x86,
@@ -572,7 +564,6 @@ namespace test {
                         },
                 }},
 
-                // TODO: expand test to cover every register and register width
                 // mov QWORD [rsp - 8], 0x0f0f0f0f ; will be sign-extended to 64 bits
                 // mov BYTE [rsp - 8], 0
                 // mov rax, [rsp - 8]
