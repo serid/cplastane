@@ -1,7 +1,6 @@
 #include "assembler.hxx"
 
 #include <stdexcept>
-#include <limits>
 
 namespace assembly {
     static auto register_width(mnemo_t::arg_t::reg_t reg) -> mnemo_t::width_t {
