@@ -442,7 +442,7 @@ namespace assembly {
             if (width == mnemo_t::width_t::Qword) {
                 width = mnemo_t::width_t::Dword;
                 // Assert user does not attempt to write 64 bit value to memory
-                if (mnemo.a2.data.imm > std::numeric_limits<int>::max())
+                if ((mnemo.a2.data.imm & 0xffffffff00000000) != 0)
                     throw std::logic_error(
                             "Attempted to write immediate 64 bit value in memory using mov @ assemble_mnemo_mov");
             }

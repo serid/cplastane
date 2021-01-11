@@ -24,6 +24,16 @@ namespace test {
         vector<mnemo_t> mnemos;
     };
 
+    auto u64_to_i64(u64 n) -> i64 {
+        union U {
+            u64 u;
+            i64 i;
+        };
+
+        U u = { .u=n };
+        return u.i;
+    }
+
     static auto test_func(const test_t &x_test) -> bool {
         std::cout << ">> Test \"" << x_test.name << "\".\n";
 
@@ -61,12 +71,12 @@ namespace test {
             if ((x_test.test_opt & CHECK_EXEC_RESULT) != 0) {
                 if (result == x_test.expected_exec_result) {
                     std::cout << "[+] Result check successful.\n";
-                    std::cout << "Result: (" << result << ").\n";
+                    std::cout << "Result: (" << std::hex << result << std::dec << ").\n";
                     return true;
                 } else {
                     std::cout << "[/] Result check failed.\n";
-                    std::cout << "Expected result: (" << x_test.expected_exec_result << ").\n"
-                              << "Actual result: (" << result << ").\n";
+                    std::cout << "Expected result: (" << std::hex << x_test.expected_exec_result << std::dec << ").\n"
+                              << "Actual result: (" << std::hex << result << std::dec << ").\n";
                     return false;
                 }
             }
@@ -571,12 +581,12 @@ namespace test {
                         },
                 }},
 
-                // mov QWORD [rsp - 8], 0x0f0f0f0f ; will be sign-extended to 64 bits
+                // mov QWORD [rsp - 8], 0x8f8f8f8f ; will be sign-extended to 64 bits
                 // mov BYTE [rsp - 8], 0
                 // mov rax, [rsp - 8]
                 // ret
                 {.name="`mov imm`", .test_opt=RUN |
-                                              CHECK_EXEC_RESULT, .expected_exec_result=0x0f0f0f00, .mnemos={
+                                              CHECK_EXEC_RESULT, .expected_exec_result=u64_to_i64(0xffffffff8f8f8f00), .mnemos={
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
@@ -586,7 +596,7 @@ namespace test {
                                 },
                                 .a2 = {
                                         .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 0x0f0f0f0f}
+                                        .data = {.imm = 0x8f8f8f8f}
                                 },
                         },
                         {
