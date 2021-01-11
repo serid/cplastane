@@ -30,7 +30,7 @@ namespace test {
             i64 i;
         };
 
-        U u = { .u=n };
+        U u = {.u=n};
         return u.i;
     }
 
@@ -55,7 +55,7 @@ namespace test {
                 }
                 std::cout << "].\n";
 
-                std::cout << "Actual bytecode: [";
+                std::cout << "Actual bytecode:   [";
                 for (const u8 &n:bytecode) {
                     std::cout << std::hex << i32(n >> 4) << i32(n & 0x0f) << std::dec << ", ";
                 }
@@ -221,6 +221,7 @@ namespace test {
                 // mov ecx, 0x0a0a
                 // mov cx, dx
                 // mov cl, dl
+                // mov qword [rax + rax * 1], 1
                 {.name="`mov` bytecode test", .test_opt=CHECK_BYTECODE, .expected_bytecode={0x48, 0xb9, 0x0f, 0x0f,
                                                                                             0x0f,
                                                                                             0x0f, 0x0f, 0x0f, 0x0f,
@@ -228,7 +229,9 @@ namespace test {
                                                                                             0xb9, 0x0a, 0x0a, 0x00,
                                                                                             0x00,
                                                                                             0x66, 0x89, 0xd1, 0x88,
-                                                                                            0xd1}, .mnemos={
+                                                                                            0xd1, 0x48, 0xc7, 0x04,
+                                                                                            0x00, 0x01, 0x00, 0x00,
+                                                                                            0x00}, .mnemos={
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
@@ -275,6 +278,18 @@ namespace test {
                                 .a2 = {
                                         .tag = mnemo_t::arg_t::tag_t::Register,
                                         .data = {.reg = mnemo_t::arg_t::reg_t::Dl}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Mov,
+                                .width = mnemo_t::width_t::Qword,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Memory,
+                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rax, .index=mnemo_t::arg_t::reg_t::Rax, .scale=mnemo_t::arg_t::memory_t::scale_t::S1, .disp=0}}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
+                                        .data = {.imm = 1}
                                 },
                         },
                 }},
@@ -586,7 +601,8 @@ namespace test {
                 // mov rax, [rsp - 8]
                 // ret
                 {.name="`mov imm`", .test_opt=RUN |
-                                              CHECK_EXEC_RESULT, .expected_exec_result=u64_to_i64(0xffffffff8f8f8f00), .mnemos={
+                                              CHECK_EXEC_RESULT, .expected_exec_result=u64_to_i64(
+                        0xffffffff8f8f8f00), .mnemos={
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,

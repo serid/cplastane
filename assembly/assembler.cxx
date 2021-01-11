@@ -264,11 +264,11 @@ namespace assembly {
         }
 
         // Short address form does not allow using "index"/"scale" or using "esp"/"rsp" as a base register.
-        // It also disallows using "ebp" base without offset.
-        bool is_short = (memory.scale == mnemo_t::arg_t::memory_t::scale_t::S0 &&
-                         memory.base != mnemo_t::arg_t::reg_t::Esp &&
-                         memory.base != mnemo_t::arg_t::reg_t::Rsp) ||
-                        (mod == 0b00 && memory.base != mnemo_t::arg_t::reg_t::Rbp);
+        // It also disallows using "ebp" base without displacement.
+        bool is_short = !(memory.scale != mnemo_t::arg_t::memory_t::scale_t::S0 ||
+                          memory.base == mnemo_t::arg_t::reg_t::Esp ||
+                          memory.base == mnemo_t::arg_t::reg_t::Rsp ||
+                          (memory.disp == 0b00 && memory.base == mnemo_t::arg_t::reg_t::Rbp));
 
         if (is_short) {
             // Encode addressing without SIB byte
