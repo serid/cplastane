@@ -323,38 +323,17 @@ namespace assembly {
         return result;
     }
 
-    // A template for a mnemo which operates on memory.
-    // These mnemos are encoded in the same way and the only difference is opcodes.
-    // opcode1 -- opcode for a byte-wise operation
-    // opcode2 -- opcode for operations with other widths
+    // A template for a mnemo which operates on memory and a register.
+    // These mnemos are encoded in a similar way and only differ in opcodes used.
     //
-    // Example:
-    // mov mem, reg
-    // is
-    // assemble_memory_mnemos_template(..., 0x88, 0x89)
-    //
-    // mov reg, mem
-    // is
-    // assemble_memory_mnemos_template(..., 0x8a, 0x8b)
-    //
-    // add mem, reg
-    // is
-    // assemble_memory_mnemos_template(..., 0x00, 0x01)
-    //
-    // add reg, mem
-    // is
-    // assemble_memory_mnemos_template(..., 0x02, 0x03)
-    //
-    // cool isn't it question_mark
-    //
-    // NOTE: Operand Encoding variants are: MR and RM
+    // Operand Encoding variants are: MR and RM
     // MR means first operand is memory, second is register
     // RM means first operand is register, second is memory
     // This function will deduce variant from `mnemo` parameter a1 and a2 fields
     // For example:
     // mov r/m32 r32 ; MR
     // mov r32 r/m32 ; RM
-    static auto assemble_memory_mnemos_template(vector<u8> &out, const mnemo_t &mnemo, u8 opcode1, u8 opcode2) -> void {
+    static auto assemble_memory_register_mnemos_template(vector<u8> &out, const mnemo_t &mnemo, u8 opcode) -> void {
         const mnemo_t::arg_t *memory_arg;
         const mnemo_t::arg_t *register_arg;
         if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Memory && mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register) {
@@ -362,14 +341,13 @@ namespace assembly {
             memory_arg = &mnemo.a1;
             register_arg = &mnemo.a2;
         } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register && mnemo.a2.tag == mnemo_t::arg_t::tag_t::Memory) {
-            // MR
+            // RM
             memory_arg = &mnemo.a2;
             register_arg = &mnemo.a1;
         } else {
-            throw std::logic_error("Unexpected mnemo shape @ assemble_memory_mnemos_template");
+            throw std::logic_error("Unexpected mnemo shape @ assemble_memory_register_mnemos_template");
         }
 
-        u8 opcode = pick_opcode_byte_or_else(mnemo.width, opcode1, opcode2);
         u8 reg = reg_to_number(register_arg->data.reg);
 
         assemble_memory_mnemo_result result = assemble_memory_mnemo(memory_arg->data.memory);
@@ -414,10 +392,10 @@ namespace assembly {
             append_imm_upto_64(out, mnemo.width, mnemo.a2.data.imm);
         } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Memory &&
                    mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register) {
-            assemble_memory_mnemos_template(out, mnemo, 0x88, 0x89);
+            assemble_memory_register_mnemos_template(out, mnemo, pick_opcode_byte_or_else(mnemo.width, 0x88, 0x89));
         } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register &&
                    mnemo.a2.tag == mnemo_t::arg_t::tag_t::Memory) {
-            assemble_memory_mnemos_template(out, mnemo, 0x8a, 0x8b);
+            assemble_memory_register_mnemos_template(out, mnemo, pick_opcode_byte_or_else(mnemo.width, 0x8a, 0x8b));
         } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Memory &&
                    mnemo.a2.tag == mnemo_t::arg_t::tag_t::Immediate) {
             u8 opcode = pick_opcode_byte_or_else(mnemo.width, 0xc6, 0xc7);
