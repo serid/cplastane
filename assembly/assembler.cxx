@@ -447,7 +447,7 @@ namespace assembly {
         switch (mnemo.a1.tag) {
             case mnemo_t::arg_t::tag_t::Register: {
                 // In 64-bit mode, `push` and `pop` only accept 16-bit or 64-bit registers.
-                if (mnemo.width == mnemo_t::width_t::Dword) {
+                if (mnemo.width == mnemo_t::width_t::Byte || mnemo.width == mnemo_t::width_t::Dword) {
                     throw std::logic_error(
                             string("Unsupported register @ assemble_mnemo_") + (is_push ? "push" : "pop"));
                 }
@@ -460,7 +460,7 @@ namespace assembly {
             }
             case mnemo_t::arg_t::tag_t::Memory: {
                 // In 64-bit mode, `push` and `pop` only accept 16-bit or 64-bit registers.
-                if (mnemo.width == mnemo_t::width_t::Dword) {
+                if (mnemo.width == mnemo_t::width_t::Byte || mnemo.width == mnemo_t::width_t::Dword) {
                     throw std::logic_error(
                             string("Unsupported register @ assemble_mnemo_") + (is_push ? "push" : "pop"));
                 }
@@ -484,18 +484,15 @@ namespace assembly {
                     throw std::logic_error("Cannot `pop` into an immediate value.");
                 }
 
-                // Encode `push`
-
-                push_operand_width_prefixes_and_opcode(out, mnemo.width, 0x6a, 0x68);
-
                 if (mnemo.width == mnemo_t::width_t::Qword) {
                     throw std::logic_error("Unsupported width! @ assemble_mnemo_push");
                 }
 
+                // Encode `push`
+                push_operand_width_prefixes_and_opcode(out, mnemo.width, 0x6a, 0x68);
                 append_imm_upto_64(out, mnemo.width, mnemo.a1.data.imm);
                 break;
             }
-
             default:
                 throw std::logic_error(
                         string("Unsupported mnemo shape @ assemble_mnemo_") + (is_push ? "push" : "pop"));
