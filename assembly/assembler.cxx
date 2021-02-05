@@ -135,6 +135,15 @@ namespace assembly {
         return (scale << 6) | (index << 3) | (base << 0);
     }
 
+    // For mnemos that only allow imms up to 32 bits. 32 bit value will be sign-extended in memory to 64 bits
+    static auto assert_imm_not_larger_than_32_bits(mnemo_t::width_t &width, i64 imm, const string &msg) -> void {
+        if (width == mnemo_t::width_t::Qword) {
+            width = mnemo_t::width_t::Dword;
+            if (!can_be_encoded_in_32bits(imm))
+                throw std::logic_error(msg);
+        }
+    }
+
     // Put an "address-size override" prefix if address width = dword
     // In 64 bit mode switches address width from 64 bits to 32 bits
     static auto push_ASOR_if_dword(vector<u8> &out, const mnemo_t::arg_t::memory_t &memory_field) -> void {
@@ -423,16 +432,9 @@ namespace assembly {
 
             append_disp(out, mnemo.a1.data.memory.disp);
 
-            // Write imm
             mnemo_t::width_t width = mnemo.width;
-            // mov only allows imms up to 32 bits. 32 bit value will be sign-extended in memory to 64 bits
-            if (width == mnemo_t::width_t::Qword) {
-                width = mnemo_t::width_t::Dword;
-                // Assert user does not attempt to write 64 bit value to memory
-                if (!can_be_encoded_in_32bits(mnemo.a2.data.imm))
-                    throw std::logic_error(
-                            "Attempted to write immediate 64 bit value in memory using mov @ assemble_mnemo_mov");
-            }
+            assert_imm_not_larger_than_32_bits(width, mnemo.a2.data.imm,
+                                               "Attempted to move immediate 64 bit value to memory using MOV @ assemble_mnemo_mov");
             append_imm_upto_64(out, width, mnemo.a2.data.imm);
         } else {
             throw std::logic_error("Unsupported mov shape!");
@@ -473,16 +475,9 @@ namespace assembly {
                        mnemo.a1.data.reg == mnemo_t::arg_t::reg_t::Rax) {
                 push_operand_width_prefixes_and_opcode(out, mnemo.width, 0x04, 0x05);
 
-                // Write imm
                 mnemo_t::width_t width = mnemo.width;
-                // ADD only allows imms up to 32 bits. 32 bit value will be sign-extended in memory to 64 bits
-                if (width == mnemo_t::width_t::Qword) {
-                    width = mnemo_t::width_t::Dword;
-                    // Assert user does not attempt to add 64 bit value to memory
-                    if (!can_be_encoded_in_32bits(mnemo.a2.data.imm))
-                        throw std::logic_error(
-                                "Attempted to add immediate 64 bit value to memory using add @ assemble_mnemo_add");
-                }
+                assert_imm_not_larger_than_32_bits(width, mnemo.a2.data.imm,
+                                                   "Attempted to add immediate 64 bit value to memory using MOV @ assemble_mnemo_add");
                 append_imm_upto_64(out, width, mnemo.a2.data.imm);
             } else {
                 u8 mod = 0b11;
@@ -492,16 +487,9 @@ namespace assembly {
                 push_operand_width_prefixes_and_opcode(out, mnemo.width, 0x80, 0x81);
                 out.push_back(mod_and_reg_and_rm_to_modrm(mod, reg, rm));
 
-                // Write imm
                 mnemo_t::width_t width = mnemo.width;
-                // ADD only allows imms up to 32 bits. 32 bit value will be sign-extended in memory to 64 bits
-                if (width == mnemo_t::width_t::Qword) {
-                    width = mnemo_t::width_t::Dword;
-                    // Assert user does not attempt to add 64 bit value to memory
-                    if (!can_be_encoded_in_32bits(mnemo.a2.data.imm))
-                        throw std::logic_error(
-                                "Attempted to add immediate 64 bit value to memory using add @ assemble_mnemo_add");
-                }
+                assert_imm_not_larger_than_32_bits(width, mnemo.a2.data.imm,
+                                                   "Attempted to add immediate 64 bit value to memory using MOV @ assemble_mnemo_add");
                 append_imm_upto_64(out, width, mnemo.a2.data.imm);
             }
         } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Memory &&
@@ -542,16 +530,9 @@ namespace assembly {
 
                 append_disp(out, mnemo.a1.data.memory.disp);
 
-                // Write imm
                 mnemo_t::width_t width = mnemo.width;
-                // ADD only allows imms up to 32 bits. 32 bit value will be sign-extended in memory to 64 bits
-                if (width == mnemo_t::width_t::Qword) {
-                    width = mnemo_t::width_t::Dword;
-                    // Assert user does not attempt to add 64 bit value to memory
-                    if (!can_be_encoded_in_32bits(mnemo.a2.data.imm))
-                        throw std::logic_error(
-                                "Attempted to add immediate 64 bit value to memory using add @ assemble_mnemo_add");
-                }
+                assert_imm_not_larger_than_32_bits(width, mnemo.a2.data.imm,
+                                                   "Attempted to add immediate 64 bit value to memory using MOV @ assemble_mnemo_add");
                 append_imm_upto_64(out, width, mnemo.a2.data.imm);
             }
         } else {
