@@ -419,7 +419,7 @@ namespace assembly {
             assemble_memory_register_mnemos_template(out, mnemo, 0x8a, 0x8b);
         } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Memory &&
                    mnemo.a2.tag == mnemo_t::arg_t::tag_t::Immediate) {
-            u8 reg = 0;
+            u8 reg = 0;  // Exactly 0 (/digit value)
 
             assemble_memory_mnemo_result result = assemble_memory_mnemo(mnemo.a1.data.memory);
 
@@ -500,41 +500,28 @@ namespace assembly {
             assemble_memory_register_mnemos_template(out, mnemo, 0x02, 0x03);
         } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Memory &&
                    mnemo.a2.tag == mnemo_t::arg_t::tag_t::Immediate) {
+            u8 reg = 0; // Exactly 0 (/digit value)
+
+            assemble_memory_mnemo_result result = assemble_memory_mnemo(mnemo.a1.data.memory);
+
+            push_ASOR_if_dword(out, mnemo.a1.data.memory);
             if (can_be_encoded_in_8bits(mnemo.a2.data.imm) && mnemo.width != mnemo_t::width_t::Byte) {
                 // Will add a sign-extended imm8 to a memory
-                u8 reg = 0;
-
-                assemble_memory_mnemo_result result = assemble_memory_mnemo(mnemo.a1.data.memory);
-
-                push_ASOR_if_dword(out, mnemo.a1.data.memory);
                 push_operand_width_prefixes_and_opcode(out, mnemo.width, 0xee, 0x83);
-                out.push_back(mod_and_reg_and_rm_to_modrm(result.mod, reg, result.rm));
-                if (result.sib_eh) {
-                    out.push_back(result.sib);
-                }
-
-                append_disp(out, mnemo.a1.data.memory.disp);
-
-                append_imm_upto_64(out, mnemo_t::width_t::Byte, mnemo.a2.data.imm);
             } else {
-                u8 reg = 0;
-
-                assemble_memory_mnemo_result result = assemble_memory_mnemo(mnemo.a1.data.memory);
-
-                push_ASOR_if_dword(out, mnemo.a1.data.memory);
+                // Will add a full imm to a memory
                 push_operand_width_prefixes_and_opcode(out, mnemo.width, 0x80, 0x81);
-                out.push_back(mod_and_reg_and_rm_to_modrm(result.mod, reg, result.rm));
-                if (result.sib_eh) {
-                    out.push_back(result.sib);
-                }
-
-                append_disp(out, mnemo.a1.data.memory.disp);
-
-                mnemo_t::width_t width = mnemo.width;
-                assert_imm_not_larger_than_32_bits(width, mnemo.a2.data.imm,
-                                                   "Attempted to add immediate 64 bit value to memory using MOV @ assemble_mnemo_add");
-                append_imm_upto_64(out, width, mnemo.a2.data.imm);
             }
+            out.push_back(mod_and_reg_and_rm_to_modrm(result.mod, reg, result.rm));
+            if (result.sib_eh) {
+                out.push_back(result.sib);
+            }
+            append_disp(out, mnemo.a1.data.memory.disp);
+
+            mnemo_t::width_t width = mnemo.width;
+            assert_imm_not_larger_than_32_bits(width, mnemo.a2.data.imm,
+                                               "Attempted to add immediate 64 bit value to memory using MOV @ assemble_mnemo_add");
+            append_imm_upto_64(out, width, mnemo.a2.data.imm);
         } else {
             throw std::logic_error("Unsupported add shape!");
         }
