@@ -11,6 +11,13 @@ namespace assembly {
         return std::numeric_limits<i32>::min() <= n && n <= std::numeric_limits<u32>::max();
     }
 
+    static auto can_be_encoded_in_8bits(i64 n) -> bool {
+        // True if n is in union of sets of valid values for i8 and u8
+        // return (std::numeric_limits<i8>::min() <= n && n <= std::numeric_limits<i8>::max()) ||
+        //        (std::numeric_limits<u8>::min() <= n && n <= std::numeric_limits<u8>::max());
+        return std::numeric_limits<i8>::min() <= n && n <= std::numeric_limits<u8>::max();
+    }
+
     static auto register_width(mnemo_t::arg_t::reg_t reg) -> mnemo_t::width_t {
         switch (reg) {
             case mnemo_t::arg_t::reg_t::Al:
@@ -432,6 +439,126 @@ namespace assembly {
         }
     }
 
+    static auto assemble_mnemo_add(vector<u8> &out, const mnemo_t &mnemo) -> void {
+        if (mnemo.tag != mnemo_t::tag_t::Add)
+            throw std::logic_error("Wrong mnemo!");
+
+        if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register &&
+            mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register) {
+            u8 mod = 0b11;
+            u8 rm = reg_to_number(mnemo.a1.data.reg);
+            u8 reg = reg_to_number(mnemo.a2.data.reg);
+
+            push_operand_width_prefixes_and_opcode(out, mnemo.width, 0x00, 0x01);
+            out.push_back(mod_and_reg_and_rm_to_modrm(mod, reg, rm));
+        } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register &&
+                   mnemo.a2.tag == mnemo_t::arg_t::tag_t::Immediate) {
+            // Add has three encoding variantions:
+            // 1. Special short encod for al/ax/eax/rax
+            // 2. Special short encod for imm8 operand and reg of any width
+            // 3. Normal
+            if (can_be_encoded_in_8bits(mnemo.a2.data.imm) && mnemo.width != mnemo_t::width_t::Byte) {
+                // Will add a sign-extended imm8 to a register
+                u8 mod = 0b11;
+                u8 rm = reg_to_number(mnemo.a1.data.reg);
+                u8 reg = 0; // Exactly 0 (/digit value)
+
+                push_operand_width_prefixes_and_opcode(out, mnemo.width, 0xee, 0x83);
+                out.push_back(mod_and_reg_and_rm_to_modrm(mod, reg, rm));
+
+                append_imm_upto_64(out, mnemo_t::width_t::Byte, mnemo.a2.data.imm);
+            } else if (mnemo.a1.data.reg == mnemo_t::arg_t::reg_t::Al ||
+                       mnemo.a1.data.reg == mnemo_t::arg_t::reg_t::Ax ||
+                       mnemo.a1.data.reg == mnemo_t::arg_t::reg_t::Eax ||
+                       mnemo.a1.data.reg == mnemo_t::arg_t::reg_t::Rax) {
+                push_operand_width_prefixes_and_opcode(out, mnemo.width, 0x04, 0x05);
+
+                // Write imm
+                mnemo_t::width_t width = mnemo.width;
+                // ADD only allows imms up to 32 bits. 32 bit value will be sign-extended in memory to 64 bits
+                if (width == mnemo_t::width_t::Qword) {
+                    width = mnemo_t::width_t::Dword;
+                    // Assert user does not attempt to add 64 bit value to memory
+                    if (!can_be_encoded_in_32bits(mnemo.a2.data.imm))
+                        throw std::logic_error(
+                                "Attempted to add immediate 64 bit value to memory using add @ assemble_mnemo_add");
+                }
+                append_imm_upto_64(out, width, mnemo.a2.data.imm);
+            } else {
+                u8 mod = 0b11;
+                u8 rm = reg_to_number(mnemo.a1.data.reg);
+                u8 reg = 0; // Exactly 0 (/digit value)
+
+                push_operand_width_prefixes_and_opcode(out, mnemo.width, 0x80, 0x81);
+                out.push_back(mod_and_reg_and_rm_to_modrm(mod, reg, rm));
+
+                // Write imm
+                mnemo_t::width_t width = mnemo.width;
+                // ADD only allows imms up to 32 bits. 32 bit value will be sign-extended in memory to 64 bits
+                if (width == mnemo_t::width_t::Qword) {
+                    width = mnemo_t::width_t::Dword;
+                    // Assert user does not attempt to add 64 bit value to memory
+                    if (!can_be_encoded_in_32bits(mnemo.a2.data.imm))
+                        throw std::logic_error(
+                                "Attempted to add immediate 64 bit value to memory using add @ assemble_mnemo_add");
+                }
+                append_imm_upto_64(out, width, mnemo.a2.data.imm);
+            }
+        } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Memory &&
+                   mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register) {
+            assemble_memory_register_mnemos_template(out, mnemo, 0x00, 0x01);
+        } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register &&
+                   mnemo.a2.tag == mnemo_t::arg_t::tag_t::Memory) {
+            assemble_memory_register_mnemos_template(out, mnemo, 0x02, 0x03);
+        } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Memory &&
+                   mnemo.a2.tag == mnemo_t::arg_t::tag_t::Immediate) {
+            if (can_be_encoded_in_8bits(mnemo.a2.data.imm) && mnemo.width != mnemo_t::width_t::Byte) {
+                // Will add a sign-extended imm8 to a memory
+                u8 reg = 0;
+
+                assemble_memory_mnemo_result result = assemble_memory_mnemo(mnemo.a1.data.memory);
+
+                push_ASOR_if_dword(out, mnemo.a1.data.memory);
+                push_operand_width_prefixes_and_opcode(out, mnemo.width, 0x80, 0x81);
+                out.push_back(mod_and_reg_and_rm_to_modrm(result.mod, reg, result.rm));
+                if (result.sib_eh) {
+                    out.push_back(result.sib);
+                }
+
+                append_disp(out, mnemo.a1.data.memory.disp);
+
+                append_imm_upto_64(out, mnemo_t::width_t::Byte, mnemo.a2.data.imm);
+            } else {
+                u8 reg = 0;
+
+                assemble_memory_mnemo_result result = assemble_memory_mnemo(mnemo.a1.data.memory);
+
+                push_ASOR_if_dword(out, mnemo.a1.data.memory);
+                push_operand_width_prefixes_and_opcode(out, mnemo.width, 0x80, 0x81);
+                out.push_back(mod_and_reg_and_rm_to_modrm(result.mod, reg, result.rm));
+                if (result.sib_eh) {
+                    out.push_back(result.sib);
+                }
+
+                append_disp(out, mnemo.a1.data.memory.disp);
+
+                // Write imm
+                mnemo_t::width_t width = mnemo.width;
+                // ADD only allows imms up to 32 bits. 32 bit value will be sign-extended in memory to 64 bits
+                if (width == mnemo_t::width_t::Qword) {
+                    width = mnemo_t::width_t::Dword;
+                    // Assert user does not attempt to add 64 bit value to memory
+                    if (!can_be_encoded_in_32bits(mnemo.a2.data.imm))
+                        throw std::logic_error(
+                                "Attempted to add immediate 64 bit value to memory using add @ assemble_mnemo_add");
+                }
+                append_imm_upto_64(out, width, mnemo.a2.data.imm);
+            }
+        } else {
+            throw std::logic_error("Unsupported add shape!");
+        }
+    }
+
     // `pop` operates similarly to `push` save for different opcodes and inability to accept immediate arguments.
     // Based on this, I can unify two functions under a template, where argument chooses what operation to encode.
     template<bool is_push>
@@ -514,6 +641,10 @@ namespace assembly {
         switch (mnemo.tag) {
             case mnemo_t::tag_t::Mov: {
                 assemble_mnemo_mov(out, mnemo);
+                break;
+            }
+            case mnemo_t::tag_t::Add: {
+                assemble_mnemo_add(out, mnemo);
                 break;
             }
             case mnemo_t::tag_t::Push: {

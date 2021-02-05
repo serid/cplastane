@@ -644,6 +644,119 @@ namespace test {
                                 .width = mnemo_t::width_t::NotSet,
                         }
                 }},
+                // bytecode test
+                // add ebx, ecx
+                // add eax, 100
+                // add ebx, 100
+                // add ebx, 10000
+                // add ebx, [rsi]
+                // add [rsi], ebx
+                // add [rsi], 100
+                // add [rsi], 10000
+                {.name="`add` bytecode test", .test_opt=CHECK_BYTECODE, .expected_bytecode={0x01, 0xcb, 0x83, 0xc0,
+                                                                                            0x64, 0x83, 0xc3, 0x64,
+                                                                                            0x81, 0xc3, 0x10, 0x27,
+                                                                                            0x00, 0x00, 0x03, 0x1e,
+                                                                                            0x01, 0x1e, 0x80, 0x06,
+                                                                                            0x64, 0x66, 0x81, 0x06,
+                                                                                            0x10, 0x27}, .mnemos={
+                        {
+                                .tag = mnemo_t::tag_t::Add,
+                                .width = mnemo_t::width_t::Dword,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Ebx}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Ecx}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Add,
+                                .width = mnemo_t::width_t::Dword,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Eax}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
+                                        .data = {.imm = 100}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Add,
+                                .width = mnemo_t::width_t::Dword,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Ebx}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
+                                        .data = {.imm = 100}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Add,
+                                .width = mnemo_t::width_t::Dword,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Ebx}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
+                                        .data = {.imm = 10000}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Add,
+                                .width = mnemo_t::width_t::Dword,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Ebx}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Memory,
+                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rsi, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=0}}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Add,
+                                .width = mnemo_t::width_t::Dword,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Memory,
+                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rsi, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=0}}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Ebx}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Add,
+                                .width = mnemo_t::width_t::Byte,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Memory,
+                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rsi, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=0}}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
+                                        .data = {.imm = 100}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Add,
+                                .width = mnemo_t::width_t::Word,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Memory,
+                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rsi, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=0}}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
+                                        .data = {.imm = 10000}
+                                },
+                        },
+                }},
         };
 
         u64 success_counter = 0;
