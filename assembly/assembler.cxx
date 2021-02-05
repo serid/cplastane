@@ -227,15 +227,20 @@ namespace assembly {
         }
     }
 
-    // Returns opcode1 if mnemo.width == byte, else returns opcode2
-    static auto pick_opcode_byte_or_else(mnemo_t::width_t width, u8 opcode1, u8 opcode2) -> u8 {
+    // Pushes opcode1 if mnemo.width == byte, else opcode2
+    static auto
+    push_operand_width_prefixes_and_opcode(vector<u8> &out, mnemo_t::width_t width, u8 opcode1, u8 opcode2) -> void {
+        push_OSOR_if_word(out, width);
+        push_rex_if_qword(out, width);
         switch (width) {
             case mnemo_t::width_t::Byte:
-                return opcode1;
+                out.push_back(opcode1);
+                break;
             case mnemo_t::width_t::Word:
             case mnemo_t::width_t::Dword:
             case mnemo_t::width_t::Qword:
-                return opcode2;
+                out.push_back(opcode2);
+                break;
             default:
                 throw std::logic_error("Unsupported width!");
         }
@@ -340,7 +345,8 @@ namespace assembly {
     // For example:
     // mov r/m32 r32 ; MR
     // mov r32 r/m32 ; RM
-    static auto assemble_memory_register_mnemos_template(vector<u8> &out, const mnemo_t &mnemo, u8 opcode) -> void {
+    static auto
+    assemble_memory_register_mnemos_template(vector<u8> &out, const mnemo_t &mnemo, u8 opcode1, u8 opcode2) -> void {
         const mnemo_t::arg_t *memory_arg;
         const mnemo_t::arg_t *register_arg;
         if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Memory && mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register) {
@@ -360,9 +366,7 @@ namespace assembly {
         assemble_memory_mnemo_result result = assemble_memory_mnemo(memory_arg->data.memory);
 
         push_ASOR_if_dword(out, memory_arg->data.memory);
-        push_OSOR_if_word(out, mnemo.width);
-        push_rex_if_qword(out, mnemo.width);
-        out.push_back(opcode);
+        push_operand_width_prefixes_and_opcode(out, mnemo.width, opcode1, opcode2);
         out.push_back(mod_and_reg_and_rm_to_modrm(result.mod, reg, result.rm));
         if (result.sib_eh) {
             out.push_back(result.sib);
@@ -377,43 +381,34 @@ namespace assembly {
 
         if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register &&
             mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register) {
-            u8 opcode = pick_opcode_byte_or_else(mnemo.width, 0x88, 0x89);
             u8 mod = 0b11;
             u8 rm = reg_to_number(mnemo.a1.data.reg);
             u8 reg = reg_to_number(mnemo.a2.data.reg);
 
-            push_OSOR_if_word(out, mnemo.width);
-            push_rex_if_qword(out, mnemo.width);
-            out.push_back(opcode);
+            push_operand_width_prefixes_and_opcode(out, mnemo.width, 0x88, 0x89);
             out.push_back(mod_and_reg_and_rm_to_modrm(mod, reg, rm));
         } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register &&
                    mnemo.a2.tag == mnemo_t::arg_t::tag_t::Immediate) {
-            u8 opcode = pick_opcode_byte_or_else(mnemo.width, 0xb0, 0xb8);
-            opcode += reg_to_number(mnemo.a1.data.reg);
+            u8 opcode_shift = reg_to_number(mnemo.a1.data.reg);
 
-            push_OSOR_if_word(out, mnemo.width);
-            push_rex_if_qword(out, mnemo.width);
-            out.push_back(opcode);
+            push_operand_width_prefixes_and_opcode(out, mnemo.width, 0xb0 + opcode_shift, 0xb8 + opcode_shift);
 
             // Write imm
             append_imm_upto_64(out, mnemo.width, mnemo.a2.data.imm);
         } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Memory &&
                    mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register) {
-            assemble_memory_register_mnemos_template(out, mnemo, pick_opcode_byte_or_else(mnemo.width, 0x88, 0x89));
+            assemble_memory_register_mnemos_template(out, mnemo, 0x88, 0x89);
         } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register &&
                    mnemo.a2.tag == mnemo_t::arg_t::tag_t::Memory) {
-            assemble_memory_register_mnemos_template(out, mnemo, pick_opcode_byte_or_else(mnemo.width, 0x8a, 0x8b));
+            assemble_memory_register_mnemos_template(out, mnemo, 0x8a, 0x8b);
         } else if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Memory &&
                    mnemo.a2.tag == mnemo_t::arg_t::tag_t::Immediate) {
-            u8 opcode = pick_opcode_byte_or_else(mnemo.width, 0xc6, 0xc7);
             u8 reg = 0;
 
             assemble_memory_mnemo_result result = assemble_memory_mnemo(mnemo.a1.data.memory);
 
             push_ASOR_if_dword(out, mnemo.a1.data.memory);
-            push_OSOR_if_word(out, mnemo.width);
-            push_rex_if_qword(out, mnemo.width);
-            out.push_back(opcode);
+            push_operand_width_prefixes_and_opcode(out, mnemo.width, 0xc6, 0xc7);
             out.push_back(mod_and_reg_and_rm_to_modrm(result.mod, reg, result.rm));
             if (result.sib_eh) {
                 out.push_back(result.sib);
@@ -491,10 +486,7 @@ namespace assembly {
 
                 // Encode `push`
 
-                u8 opcode = pick_opcode_byte_or_else(mnemo.width, 0x6a, 0x68);
-
-                push_OSOR_if_word(out, mnemo.width);
-                out.push_back(opcode);
+                push_operand_width_prefixes_and_opcode(out, mnemo.width, 0x6a, 0x68);
 
                 if (mnemo.width == mnemo_t::width_t::Qword) {
                     throw std::logic_error("Unsupported width! @ assemble_mnemo_push");
