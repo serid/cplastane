@@ -321,8 +321,8 @@ namespace assembly {
             // mod reg rm    ss index base
             if ((mod == 0b00 && memory.base == mnemo_t::arg_t::reg_t::Ebp) ||
                 memory.index == mnemo_t::arg_t::reg_t::Esp) {
-                throw std::logic_error("Bruh");
-                // TODO: handle corner cases
+                throw std::logic_error("Unsupported operation.");
+                // TO DO: handle corner cases
             }
 
             // Handle scale_t::S0 edge case
