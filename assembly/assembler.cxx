@@ -507,7 +507,7 @@ namespace assembly {
                 assemble_memory_mnemo_result result = assemble_memory_mnemo(mnemo.a1.data.memory);
 
                 push_ASOR_if_dword(out, mnemo.a1.data.memory);
-                push_operand_width_prefixes_and_opcode(out, mnemo.width, 0x80, 0x81);
+                push_operand_width_prefixes_and_opcode(out, mnemo.width, 0xee, 0x83);
                 out.push_back(mod_and_reg_and_rm_to_modrm(result.mod, reg, result.rm));
                 if (result.sib_eh) {
                     out.push_back(result.sib);
