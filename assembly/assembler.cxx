@@ -1,8 +1,16 @@
 #include "assembler.hxx"
 
 #include <stdexcept>
+#include <limits>
 
 namespace assembly {
+    static auto can_be_encoded_in_32bits(i64 n) -> bool {
+        // True if n is in union of sets of valid values for i32 and u32
+        // return (std::numeric_limits<i32>::min() <= n && n <= std::numeric_limits<i32>::max()) ||
+        //        (std::numeric_limits<u32>::min() <= n && n <= std::numeric_limits<u32>::max());
+        return std::numeric_limits<i32>::min() <= n && n <= std::numeric_limits<u32>::max();
+    }
+
     static auto register_width(mnemo_t::arg_t::reg_t reg) -> mnemo_t::width_t {
         switch (reg) {
             case mnemo_t::arg_t::reg_t::Al:
@@ -419,7 +427,7 @@ namespace assembly {
             if (width == mnemo_t::width_t::Qword) {
                 width = mnemo_t::width_t::Dword;
                 // Assert user does not attempt to write 64 bit value to memory
-                if ((mnemo.a2.data.imm & 0xffffffff00000000) != 0)
+                if (!can_be_encoded_in_32bits(mnemo.a2.data.imm))
                     throw std::logic_error(
                             "Attempted to write immediate 64 bit value in memory using mov @ assemble_mnemo_mov");
             }
