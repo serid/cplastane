@@ -1,8 +1,8 @@
 #include <iostream>
 
-#include "test/assembly_test.hxx"
+#include "tests/assembly.hxx"
 
 int main() {
 //    syntax::parse::test_parser();
-    test::test_jit();
+    tests::test_jit();
 }

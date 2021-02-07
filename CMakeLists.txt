@@ -13,8 +13,10 @@ add_executable(cplastane
         assembly/assembler.hxx
         jit/jit.cxx
         jit/jit.hxx
-        test/assembly_test.cxx
-        test/assembly_test.hxx
+        tests/assembly.cxx
+        tests/assembly.hxx
+        test/test.cxx
+        test/test.hxx
         )
 
 target_compile_options(cplastane PUBLIC -Wall -Wextra -Werror -Wno-missing-field-initializers -Wno-unused-variable -Wno-unused-function)

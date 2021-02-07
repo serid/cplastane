@@ -1,4 +1,4 @@
-#include "assembly_test.hxx"
+#include "assembly.hxx"
 
 #include <iostream>
 
@@ -7,7 +7,7 @@
 
 using assembly::mnemo_t;
 
-namespace test {
+namespace tests {
     /// Test options. Combine with bitwise-or
     enum test_opt_t {
         NONE = 0,

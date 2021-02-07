@@ -1,5 +1,5 @@
 #pragma once
 
-namespace test {
+namespace tests {
     auto test_jit() -> void;
 }
