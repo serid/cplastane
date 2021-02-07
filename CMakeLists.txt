@@ -17,6 +17,10 @@ add_executable(cplastane
         test/assembly_test.hxx
         assembly/parser/parse.cxx
         assembly/parser/parse.hxx
+        parsec/parsec.cxx
+        parsec/parsec.hxx
+        parsec/parsec_template.hxx
+        assembly/parser/parsec_impl.cxx
         )
 
 target_compile_options(cplastane PUBLIC -Wall -Wextra -Werror -Wno-missing-field-initializers -Wno-unused-variable -Wno-unused-function)
