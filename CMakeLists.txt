@@ -15,7 +15,6 @@ add_executable(cplastane
         jit/jit.hxx
         tests/assembly.cxx
         tests/assembly.hxx
-        test/test.cxx
         test/test.hxx
         )
 

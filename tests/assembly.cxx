@@ -4,6 +4,7 @@
 
 #include "../assembly/assembler.hxx"
 #include "../jit/jit.hxx"
+#include "../test/test.hxx"
 
 using assembly::mnemo_t;
 
@@ -768,5 +769,140 @@ namespace tests {
 
         std::cout << "\n";
         std::cout << "Testing complete [" << success_counter << " / " << tests.size() << "].\n";
+    }
+
+    // Test group of tests that output bytecode
+    static auto run_bytecode_tests() -> test::test_group_result {
+        auto process = [](vector<mnemo_t> mnemos) -> vector<u8>{
+            return assembly::assemble(mnemos);
+        };
+        auto comparator = [](const vector<u8> &vec1, const vector<u8> &vec2) -> bool {
+            return vec1 == vec2;
+        };
+        auto output_printer = [](const vector<u8> &vec) -> void {
+            std::cout << "[";
+            for (const u8 &n : vec) {
+                std::cout << std::hex << i32(n >> 4) << i32(n & 0x0f) << std::dec << ", ";
+            }
+            std::cout << "]";
+        };
+
+        vector<test::test_t<vector<mnemo_t>, vector<u8>>> tests = {
+                // bytecode test
+                // mov rcx, 0x0f0f0f0f0f0f0f0f
+                // mov ecx, 0x0a0a
+                // mov cx, dx
+                // mov cl, dl
+                // mov qword [rax + rax * 1], 1
+                {.name="`mov` bytecode test", .input={
+                        {
+                                .tag = mnemo_t::tag_t::Mov,
+                                .width = mnemo_t::width_t::Qword,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rcx}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
+                                        .data = {.imm = 0x0f0f0f0f0f0f0f0f}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Mov,
+                                .width = mnemo_t::width_t::Dword,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Ecx}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
+                                        .data = {.imm = 0x0a0a}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Mov,
+                                .width = mnemo_t::width_t::Word,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Cx}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Dx}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Mov,
+                                .width = mnemo_t::width_t::Byte,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Cl}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Dl}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Mov,
+                                .width = mnemo_t::width_t::Qword,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Memory,
+                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rax, .index=mnemo_t::arg_t::reg_t::Rax, .scale=mnemo_t::arg_t::memory_t::scale_t::S1, .disp=0}}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
+                                        .data = {.imm = 1}
+                                },
+                        },
+                }, .expected_output={0x48, 0xb9, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0xb9, 0x0a, 0x0a, 0x00,
+                                     0x00, 0x66, 0x89, 0xd1, 0x88, 0xd1, 0x48, 0xc7, 0x04, 0x00, 0x01, 0x00, 0x00,
+                                     0x00}, .process=process, .comparator=comparator, .output_printer=output_printer},
+        };
+
+        return test::run_test_group(tests);
+    }
+
+    // Test group of tests that execute bytecode
+    static auto run_exec_tests() -> test::test_group_result {
+        auto process = [](vector<mnemo_t> mnemos) -> i64 {
+            vector<u8> bytecode = assembly::assemble(mnemos);
+            return jit::eval_mc(bytecode.data(), bytecode.size());
+        };
+        auto comparator = [](const i64 &num1, const i64 &num2) -> bool {
+            return num1 == num2;
+        };
+        auto output_printer = [](const i64 &num1) -> void {
+            std::cout << "(" << num1 << ")";
+        };
+
+        vector<test::test_t<vector<mnemo_t>, i64>> tests = {
+                // mov eax, 100
+                // ret
+                {.name="Simple `return 100;`", .input={
+                        {
+                                .tag = mnemo_t::tag_t::Mov,
+                                .width = mnemo_t::width_t::Dword,
+                                .a1 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Register,
+                                        .data = {.reg = mnemo_t::arg_t::reg_t::Eax}
+                                },
+                                .a2 = {
+                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
+                                        .data = {.imm = 100}
+                                },
+                        },
+                        {
+                                .tag = mnemo_t::tag_t::Ret,
+                                .width = mnemo_t::width_t::NotSet,
+                        }
+                }, .expected_output=100, .process=process, .comparator=comparator, .output_printer=output_printer},
+        };
+
+        return test::run_test_group(tests);
+    }
+
+    auto new_test_assembly() -> void {
+        test::log_combine_test_groups_results<2>({run_bytecode_tests(), run_exec_tests()});
     }
 }

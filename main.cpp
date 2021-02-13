@@ -4,5 +4,5 @@
 
 int main() {
 //    syntax::parse::test_parser();
-    tests::test_jit();
+    tests::new_test_assembly();
 }
