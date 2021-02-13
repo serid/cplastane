@@ -5,6 +5,6 @@
 
 namespace assembly {
     namespace parse {
-        auto parse(std::string_view s) -> vector<mnemo_t>;
+        auto parse(std::string_view tail) -> vector<mnemo_t>;
     }
 }
