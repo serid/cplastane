@@ -13,8 +13,11 @@ add_executable(cplastane
         assembly/assembler.hxx
         jit/jit.cxx
         jit/jit.hxx
-        test/assembly_test.cxx
-        test/assembly_test.hxx
+        tests/assembly.cxx
+        tests/assembly.hxx
+        test/test.hxx
+        os/alloc.cxx
+        os/alloc.hxx
         assembly/parser/parse.cxx
         assembly/parser/parse.hxx
         parsec/parsec.cxx
