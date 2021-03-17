@@ -9,12 +9,21 @@
 namespace test {
     template<typename Input, typename Output>
     struct test_t {
+        typedef std::function<Output(const Input &)> process_f;
+        typedef std::function<bool(const Output &, const Output &)> comparator_f;
+        typedef std::function<void(const Output &)> output_printer_f;
+
         string name;
         Input input;
         Output expected_output;
-        std::function<Output(const Input &)> process;
-        std::function<bool(const Output &, const Output &)> comparator;
-        std::function<void(const Output &)> output_printer;
+        process_f process;
+        comparator_f comparator;
+        output_printer_f output_printer;
+
+        test_t(string &&name, Input &&input, Output &&expected_output, process_f process, comparator_f comparator,
+               output_printer_f output_printer) : name(name), input(input), expected_output(expected_output),
+                                                  process(process), comparator(comparator),
+                                                  output_printer(output_printer) {}
     };
 
     template<typename Input, typename Output>
@@ -80,6 +89,7 @@ namespace test {
         }
 
         std::cout << "\n";
-        std::cout << "Testing complete (combined result) [" << combined_success_counter << " / " << combined_test_group_size << "].\n";
+        std::cout << "Testing complete (combined result) [" << combined_success_counter << " / "
+                  << combined_test_group_size << "].\n";
     }
 }

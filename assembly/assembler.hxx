@@ -66,6 +66,32 @@ namespace assembly {
                 reg_t reg;
                 memory_t memory;
             } data;
+
+            static arg_t imm(i64 imm) {
+                return {
+                        .tag=tag_t::Immediate,
+                        .data {.imm = imm},
+                };
+            }
+
+            static arg_t reg(reg_t reg) {
+                arg_t o;
+                o.tag = tag_t::Register;
+                o.data.reg = reg;
+                return o;
+            }
+
+            static arg_t mem(reg_t base, reg_t index, memory_t::scale_t scale, i32 disp) {
+                arg_t o;
+                o.tag = tag_t::Memory;
+                o.data.memory = {
+                        .base=base,
+                        .index=index,
+                        .scale=scale,
+                        .disp=disp,
+                };
+                return o;
+            }
         };
 
         enum class tag_t {

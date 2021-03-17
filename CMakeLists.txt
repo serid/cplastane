@@ -22,6 +22,6 @@ add_executable(cplastane
 
 target_compile_options(cplastane PUBLIC -Wall -Wextra -Werror -Wno-missing-field-initializers -Wno-unused-variable -Wno-unused-function)
 
-set(CMAKE_C_FLAGS "-fsanitize=address -O0 -fno-omit-frame-pointer -g")
-set(CMAKE_CXX_FLAGS "-fsanitize=address -O0 -fno-omit-frame-pointer -g")
-set(CMAKE_LD_FLAGS "-fsanitize=address -O0 -fno-omit-frame-pointer -g")
+set(CMAKE_C_FLAGS "-O0 -fno-omit-frame-pointer -g")
+set(CMAKE_CXX_FLAGS "-O0 -fno-omit-frame-pointer -g")
+set(CMAKE_LD_FLAGS "-O0 -fno-omit-frame-pointer -g")

@@ -35,6 +35,8 @@ namespace tests {
             std::cout << "]";
         };
 
+        // typedef test::test_t<vector<mnemo_t>, vector<u8>> bytecode_test;
+
         vector<test::test_t<vector<mnemo_t>, vector<u8>>> tests = {
                 // bytecode test
                 // mov rcx, 0x0f0f0f0f0f0f0f0f
@@ -46,66 +48,41 @@ namespace tests {
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rcx}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 0x0f0f0f0f0f0f0f0f}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rcx),
+                                .a2 = mnemo_t::arg_t::imm(0x0f0f0f0f0f0f0f0f),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Dword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Ecx}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 0x0a0a}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Ecx),
+                                .a2 = mnemo_t::arg_t::imm(0x0a0a),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Word,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Cx}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Dx}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Cx),
+                                .a2 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Dx),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Byte,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Cl}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Dl}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Cl),
+                                .a2 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Dl),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Memory,
-                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rax, .index=mnemo_t::arg_t::reg_t::Rax, .scale=mnemo_t::arg_t::memory_t::scale_t::S1, .disp=0}}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 1}
-                                },
+                                .a1 = mnemo_t::arg_t::mem(mnemo_t::arg_t::reg_t::Rax,
+                                                          mnemo_t::arg_t::reg_t::Rax,
+                                                          mnemo_t::arg_t::memory_t::scale_t::S1, 0),
+                                .a2 = mnemo_t::arg_t::imm(1),
                         },
-                }, .expected_output={0x48, 0xb9, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0xb9, 0x0a, 0x0a, 0x00,
-                                     0x00, 0x66, 0x89, 0xd1, 0x88, 0xd1, 0x48, 0xc7, 0x04, 0x00, 0x01, 0x00, 0x00,
-                                     0x00}, .process=process, .comparator=comparator, .output_printer=output_printer},
+                },
+                        .expected_output={0x48, 0xb9, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0xb9, 0x0a, 0x0a,
+                                          0x00, 0x00, 0x66, 0x89, 0xd1, 0x88, 0xd1, 0x48, 0xc7, 0x04, 0x00, 0x01, 0x00,
+                                          0x00, 0x00},
+                        .process=process, .comparator=comparator, .output_printer=output_printer
+                },
 
                 // bytecode test
                 // add ebx, ecx
@@ -120,102 +97,65 @@ namespace tests {
                         {
                                 .tag = mnemo_t::tag_t::Add,
                                 .width = mnemo_t::width_t::Dword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Ebx}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Ecx}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Ebx),
+                                .a2 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Ecx),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Add,
                                 .width = mnemo_t::width_t::Dword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Eax}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 100}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Eax),
+                                .a2 = mnemo_t::arg_t::imm(100),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Add,
                                 .width = mnemo_t::width_t::Dword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Ebx}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 100}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Ebx),
+                                .a2 = mnemo_t::arg_t::imm(100),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Add,
                                 .width = mnemo_t::width_t::Dword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Ebx}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 10000}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Ebx),
+                                .a2 = mnemo_t::arg_t::imm(10000),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Add,
                                 .width = mnemo_t::width_t::Dword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Ebx}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Memory,
-                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rsi, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=0}}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Ebx),
+                                .a2 = mnemo_t::arg_t::mem(mnemo_t::arg_t::reg_t::Rsi,
+                                                          mnemo_t::arg_t::reg_t::Rcx,
+                                                          mnemo_t::arg_t::memory_t::scale_t::S0, 0),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Add,
                                 .width = mnemo_t::width_t::Dword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Memory,
-                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rsi, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=0}}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Ebx}
-                                },
+                                .a1 = mnemo_t::arg_t::mem(mnemo_t::arg_t::reg_t::Rsi,
+                                                          mnemo_t::arg_t::reg_t::Rcx,
+                                                          mnemo_t::arg_t::memory_t::scale_t::S0, 0),
+                                .a2 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Ebx),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Add,
                                 .width = mnemo_t::width_t::Byte,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Memory,
-                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rsi, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=0}}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 100}
-                                },
+                                .a1 = mnemo_t::arg_t::mem(mnemo_t::arg_t::reg_t::Rsi,
+                                                          mnemo_t::arg_t::reg_t::Rcx,
+                                                          mnemo_t::arg_t::memory_t::scale_t::S0, 0),
+                                .a2 = mnemo_t::arg_t::imm(100),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Add,
                                 .width = mnemo_t::width_t::Word,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Memory,
-                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rsi, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=0}}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 10000}
-                                },
+                                .a1 = mnemo_t::arg_t::mem(mnemo_t::arg_t::reg_t::Rsi,
+                                                          mnemo_t::arg_t::reg_t::Rcx,
+                                                          mnemo_t::arg_t::memory_t::scale_t::S0, 0),
+                                .a2 = mnemo_t::arg_t::imm(10000),
                         },
-                }, .expected_output={0x01, 0xcb, 0x83, 0xc0, 0x64, 0x83, 0xc3, 0x64, 0x81, 0xc3, 0x10, 0x27, 0x00, 0x00,
-                                     0x03, 0x1e, 0x01, 0x1e, 0x80, 0x06, 0x64, 0x66, 0x81, 0x06, 0x10,
-                                     0x27}, .process=process, .comparator=comparator, .output_printer=output_printer},
+                },
+                        .expected_output={0x01, 0xcb, 0x83, 0xc0, 0x64, 0x83, 0xc3, 0x64, 0x81, 0xc3, 0x10, 0x27, 0x00,
+                                          0x00, 0x03, 0x1e, 0x01, 0x1e, 0x80, 0x06, 0x64, 0x66, 0x81, 0x06, 0x10,
+                                          0x27},
+                        .process=process, .comparator=comparator, .output_printer=output_printer
+                },
 
                 // bytecode test
                 // mov rcx, 0x0f0f0f0f0f0f0f0f
@@ -227,66 +167,40 @@ namespace tests {
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rcx}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 0x0f0f0f0f0f0f0f0f}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rcx),
+                                .a2 = mnemo_t::arg_t::imm(0x0f0f0f0f0f0f0f0f),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Dword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Ecx}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 0x0a0a}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Ecx),
+                                .a2 = mnemo_t::arg_t::imm(0x0a0a),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Word,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Cx}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Dx}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Cx),
+                                .a2 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Dx),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Byte,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Cl}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Dl}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Cl),
+                                .a2 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Dl),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Memory,
-                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rax, .index=mnemo_t::arg_t::reg_t::Rax, .scale=mnemo_t::arg_t::memory_t::scale_t::S1, .disp=0}}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 1}
-                                },
+                                .a1 = mnemo_t::arg_t::mem(mnemo_t::arg_t::reg_t::Rax,
+                                                          mnemo_t::arg_t::reg_t::Rax,
+                                                          mnemo_t::arg_t::memory_t::scale_t::S1, 0),
+                                .a2 = mnemo_t::arg_t::imm(1),
                         },
                 }, .expected_output={0x48, 0xb9, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0xb9, 0x0a, 0x0a, 0x00,
                                      0x00, 0x66, 0x89, 0xd1, 0x88, 0xd1, 0x48, 0xc7, 0x04, 0x00, 0x01, 0x00, 0x00,
-                                     0x00}, .process=process, .comparator=comparator, .output_printer=output_printer},
+                                     0x00},
+                        .process=process, .comparator=comparator, .output_printer=output_printer
+                },
 
                 // bytecode test
                 // push rbx
@@ -299,54 +213,41 @@ namespace tests {
                         {
                                 .tag = mnemo_t::tag_t::Push,
                                 .width = mnemo_t::width_t::Qword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rbx}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rbx),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Push,
                                 .width = mnemo_t::width_t::Byte,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 100}
-                                },
+                                .a1 = mnemo_t::arg_t::imm(100),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Push,
                                 .width = mnemo_t::width_t::Dword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 1000}
-                                },
+                                .a1 = mnemo_t::arg_t::imm(1000),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Push,
                                 .width = mnemo_t::width_t::Qword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Memory,
-                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Esi, .index=mnemo_t::arg_t::reg_t::Eax, .scale=mnemo_t::arg_t::memory_t::scale_t::S4, .disp=-10}}
-                                },
+                                .a1 = mnemo_t::arg_t::mem(mnemo_t::arg_t::reg_t::Esi,
+                                                          mnemo_t::arg_t::reg_t::Eax,
+                                                          mnemo_t::arg_t::memory_t::scale_t::S4, -10),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Pop,
                                 .width = mnemo_t::width_t::Qword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rbx}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rbx),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Pop,
                                 .width = mnemo_t::width_t::Qword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Memory,
-                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Esi, .index=mnemo_t::arg_t::reg_t::Eax, .scale=mnemo_t::arg_t::memory_t::scale_t::S4, .disp=-10}}
-                                },
+                                .a1 = mnemo_t::arg_t::mem(mnemo_t::arg_t::reg_t::Esi,
+                                                          mnemo_t::arg_t::reg_t::Eax,
+                                                          mnemo_t::arg_t::memory_t::scale_t::S4, -10),
                         },
                 }, .expected_output={0x53, 0x6a, 0x64, 0x68, 0xe8, 0x03, 0x00, 0x00, 0x67, 0xff, 0x74, 0x86, 0xf6, 0x5b,
-                                     0x67, 0x8f, 0x44, 0x86,
-                                     0xf6}, .process=process, .comparator=comparator, .output_printer=output_printer},
+                                     0x67, 0x8f, 0x44, 0x86, 0xf6},
+                        .process=process, .comparator=comparator, .output_printer=output_printer
+                },
         };
 
         return test::run_test_group(tests);
@@ -372,19 +273,13 @@ namespace tests {
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Dword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Eax}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 100}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Eax),
+                                .a2 = mnemo_t::arg_t::imm(100),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Ret,
                                 .width = mnemo_t::width_t::NotSet,
-                        }
+                        },
                 }, .expected_output=100, .process=process, .comparator=comparator, .output_printer=output_printer},
 
                 // mov ecx, 0xff00
@@ -394,31 +289,19 @@ namespace tests {
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Dword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Ecx}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 0xff00}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Ecx),
+                                .a2 = mnemo_t::arg_t::imm(0xff00),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Dword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Eax}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Ecx}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Eax),
+                                .a2 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Ecx),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Ret,
                                 .width = mnemo_t::width_t::NotSet,
-                        }
+                        },
                 }, .expected_output=0xff00, .process=process, .comparator=comparator, .output_printer=output_printer},
 
                 // mov rcx, 0x0f1f2f3f4f5f6f7f
@@ -428,26 +311,14 @@ namespace tests {
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rcx}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 0x0f1f2f3f4f5f6f7f}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rcx),
+                                .a2 = mnemo_t::arg_t::imm(0x0f1f2f3f4f5f6f7f),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rax}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rcx}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rax),
+                                .a2 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rcx),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Ret,
@@ -463,26 +334,14 @@ namespace tests {
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rax}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 0x0f0f0f0f0f0f0f0f}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rax),
+                                .a2 = mnemo_t::arg_t::imm(0x0f0f0f0f0f0f0f0f),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Byte,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Al}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 0}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Al),
+                                .a2 = mnemo_t::arg_t::imm(0),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Ret,
@@ -507,103 +366,70 @@ namespace tests {
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rcx}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rbp}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rcx),
+                                .a2 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rbp),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rbp}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rsp}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rbp),
+                                .a2 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rsp),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rax}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 0x0f0f0f0f0f0f0f0f}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rax),
+                                .a2 = mnemo_t::arg_t::imm(0x0f0f0f0f0f0f0f0f),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Memory,
-                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rbp, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=-8}}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rax}
-                                },
+                                .a1 = mnemo_t::arg_t::mem(
+                                        mnemo_t::arg_t::reg_t::Rbp,
+                                        mnemo_t::arg_t::reg_t::Rcx,
+                                        mnemo_t::arg_t::memory_t::scale_t::S0,
+                                        -8
+                                ),
+                                .a2 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rax),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Byte,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Al}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 0}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Al),
+                                .a2 = mnemo_t::arg_t::imm(0),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Byte,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Memory,
-                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rbp, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=-8}}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Al}
-                                },
+                                .a1 = mnemo_t::arg_t::mem(
+                                        mnemo_t::arg_t::reg_t::Rbp,
+                                        mnemo_t::arg_t::reg_t::Rcx,
+                                        mnemo_t::arg_t::memory_t::scale_t::S0,
+                                        -8
+                                ),
+                                .a2 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Al),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rax}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Memory,
-                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rbp, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=-8}}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rax),
+                                .a2 = mnemo_t::arg_t::mem(
+                                        mnemo_t::arg_t::reg_t::Rbp,
+                                        mnemo_t::arg_t::reg_t::Rcx,
+                                        mnemo_t::arg_t::memory_t::scale_t::S0,
+                                        -8
+                                ),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rbp}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rcx}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rbp),
+                                .a2 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rcx),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Ret,
                                 .width = mnemo_t::width_t::NotSet,
-                        }
+                        },
                 }, .expected_output=0x0f0f0f0f0f0f0f00, .process=process, .comparator=comparator, .output_printer=output_printer},
 
                 // Simple `mov mem reg` test with SIB. Second mov superimposes value on a previous value.
@@ -618,67 +444,52 @@ namespace tests {
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rax}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 0x0f0f0f0f0f0f0f0f}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rax),
+                                .a2 = mnemo_t::arg_t::imm(0x0f0f0f0f0f0f0f0f),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Memory,
-                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rsp, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=-8}}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rax}
-                                },
+                                .a1 = mnemo_t::arg_t::mem(
+                                        mnemo_t::arg_t::reg_t::Rsp,
+                                        mnemo_t::arg_t::reg_t::Rcx,
+                                        mnemo_t::arg_t::memory_t::scale_t::S0,
+                                        -8
+                                ),
+                                .a2 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rax),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Byte,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Al}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 0}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Al),
+                                .a2 = mnemo_t::arg_t::imm(0),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Byte,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Memory,
-                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rsp, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=-8}}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Al}
-                                },
+                                .a1 = mnemo_t::arg_t::mem(
+                                        mnemo_t::arg_t::reg_t::Rsp,
+                                        mnemo_t::arg_t::reg_t::Rcx,
+                                        mnemo_t::arg_t::memory_t::scale_t::S0,
+                                        -8
+                                ),
+                                .a2 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Al),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rax}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Memory,
-                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rsp, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=-8}}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rax),
+                                .a2 = mnemo_t::arg_t::mem(
+                                        mnemo_t::arg_t::reg_t::Rsp,
+                                        mnemo_t::arg_t::reg_t::Rcx,
+                                        mnemo_t::arg_t::memory_t::scale_t::S0,
+                                        -8
+                                ),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Ret,
                                 .width = mnemo_t::width_t::NotSet,
-                        }
+                        },
                 }, .expected_output=0x0f0f0f0f0f0f0f00, .process=process, .comparator=comparator, .output_printer=output_printer},
 
                 // `push/pop` test.
@@ -691,35 +502,23 @@ namespace tests {
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rcx}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 0x0f0f0f0f0f0f0f00}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rcx),
+                                .a2 = mnemo_t::arg_t::imm(0x0f0f0f0f0f0f0f00),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Push,
                                 .width = mnemo_t::width_t::Qword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rcx}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rcx),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Pop,
                                 .width = mnemo_t::width_t::Qword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rax}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rax),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Ret,
                                 .width = mnemo_t::width_t::NotSet,
-                        }
+                        },
                 }, .expected_output=0x0f0f0f0f0f0f0f00, .process=process, .comparator=comparator, .output_printer=output_printer},
 
                 // mov QWORD [rsp - 8], 0x8f8f8f8f ; will be sign-extended to 64 bits
@@ -730,46 +529,42 @@ namespace tests {
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Memory,
-                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rsp, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=-8}}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 0x8f8f8f8f}
-                                },
+                                .a1 = mnemo_t::arg_t::mem(
+                                        mnemo_t::arg_t::reg_t::Rsp,
+                                        mnemo_t::arg_t::reg_t::Rcx,
+                                        mnemo_t::arg_t::memory_t::scale_t::S0,
+                                        -8
+                                ),
+                                .a2 = mnemo_t::arg_t::imm(0x8f8f8f8f),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Byte,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Memory,
-                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rsp, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=-8}}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Immediate,
-                                        .data = {.imm = 0}
-                                },
+                                .a1 = mnemo_t::arg_t::mem(
+                                        mnemo_t::arg_t::reg_t::Rsp,
+                                        mnemo_t::arg_t::reg_t::Rcx,
+                                        mnemo_t::arg_t::memory_t::scale_t::S0,
+                                        -8
+                                ),
+                                .a2 = mnemo_t::arg_t::imm(0),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
-                                .a1 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Register,
-                                        .data = {.reg = mnemo_t::arg_t::reg_t::Rax}
-                                },
-                                .a2 = {
-                                        .tag = mnemo_t::arg_t::tag_t::Memory,
-                                        .data = {.memory = {.base=mnemo_t::arg_t::reg_t::Rsp, .index=mnemo_t::arg_t::reg_t::Rcx, .scale=mnemo_t::arg_t::memory_t::scale_t::S0, .disp=-8}}
-                                },
+                                .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rax),
+                                .a2 = mnemo_t::arg_t::mem(
+                                        mnemo_t::arg_t::reg_t::Rsp,
+                                        mnemo_t::arg_t::reg_t::Rcx,
+                                        mnemo_t::arg_t::memory_t::scale_t::S0,
+                                        -8
+                                ),
                         },
                         {
                                 .tag = mnemo_t::tag_t::Ret,
                                 .width = mnemo_t::width_t::NotSet,
-                        }
-                }, .expected_output=u64_to_i64(
-                        0xffffffff8f8f8f00), .process=process, .comparator=comparator, .output_printer=output_printer},
-
+                        },
+                }, .expected_output=u64_to_i64(0xffffffff8f8f8f00),
+                        .process=process, .comparator=comparator, .output_printer=output_printer},
         };
 
         return test::run_test_group(tests);
