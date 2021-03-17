@@ -18,6 +18,7 @@ add_executable(cplastane
         test/test.hxx
         os/alloc.cxx
         os/alloc.hxx
+        test/test.cxx
         )
 
 target_compile_options(cplastane PUBLIC -Wall -Wextra -Werror -Wno-missing-field-initializers -Wno-unused-variable -Wno-unused-function)
