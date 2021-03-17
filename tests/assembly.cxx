@@ -20,7 +20,7 @@ namespace tests {
     }
 
     // Test group of tests that output bytecode
-    static auto run_bytecode_tests() -> test::test_group_result {
+    static auto run_bytecode_tests() -> test::TestGroupResult {
         auto process = [](vector<mnemo_t> mnemos) -> vector<u8> {
             return assembly::assemble(mnemos);
         };
@@ -35,16 +35,16 @@ namespace tests {
             std::cout << "]";
         };
 
-        using bytecode_test = test::test_t<vector<mnemo_t>, vector<u8>>;
+        using bytecode_test = test::Test<vector<mnemo_t>, vector<u8>>;
 
-        vector<test::test_t<vector<mnemo_t>, vector<u8>>> tests = {
+        test::TestGroup tests = {
                 // bytecode test
                 // mov rcx, 0x0f0f0f0f0f0f0f0f
                 // mov ecx, 0x0a0a
                 // mov cx, dx
                 // mov cl, dl
                 // mov qword [rax + rax * 1], 1
-                bytecode_test("`mov` bytecode test", {
+                new bytecode_test("`mov` bytecode test", {
                                       {
                                               .tag = mnemo_t::tag_t::Mov,
                                               .width = mnemo_t::width_t::Qword,
@@ -92,7 +92,7 @@ namespace tests {
                 // add [rsi], ebx
                 // add [rsi], 100
                 // add [rsi], 10000
-                bytecode_test("`add` bytecode test", {
+                new bytecode_test("`add` bytecode test", {
                                       {
                                               .tag = mnemo_t::tag_t::Add,
                                               .width = mnemo_t::width_t::Dword,
@@ -161,7 +161,7 @@ namespace tests {
                 // mov cx, dx
                 // mov cl, dl
                 // mov qword [rax + rax * 1], 1
-                bytecode_test("`mov` bytecode test", {
+                new bytecode_test("`mov` bytecode test", {
                                       {
                                               .tag = mnemo_t::tag_t::Mov,
                                               .width = mnemo_t::width_t::Qword,
@@ -206,7 +206,7 @@ namespace tests {
                 // push [esi+eax*4-10]
                 // pop rbx
                 // pop [esi+eax*4-10]
-                bytecode_test("`push/pop` bytecode multitest", {
+                new bytecode_test("`push/pop` bytecode multitest", {
                                       {
                                               .tag = mnemo_t::tag_t::Push,
                                               .width = mnemo_t::width_t::Qword,
@@ -251,7 +251,7 @@ namespace tests {
     }
 
     // Test group of tests that execute bytecode
-    static auto run_exec_tests() -> test::test_group_result {
+    static auto run_exec_tests() -> test::TestGroupResult {
         auto process = [](vector<mnemo_t> mnemos) -> i64 {
             vector<u8> bytecode = assembly::assemble(mnemos);
             return jit::eval_mc(bytecode.data(), bytecode.size());
@@ -263,12 +263,12 @@ namespace tests {
             std::cout << "(" << num1 << ")";
         };
 
-        using exec_test = test::test_t<vector<mnemo_t>, i64>;
+        using exec_test = test::Test<vector<mnemo_t>, i64>;
 
-        vector<test::test_t<vector<mnemo_t>, i64>> tests = {
+        test::TestGroup tests = {
                 // mov eax, 100
                 // ret
-                exec_test("Simple `return 100;`", {
+                new exec_test("Simple `return 100;`", {
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Dword,
@@ -284,7 +284,7 @@ namespace tests {
                 // mov ecx, 0xff00
                 // mov eax, ecx
                 // ret
-                exec_test("`mov reg, reg`", {
+                new exec_test("`mov reg, reg`", {
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Dword,
@@ -306,7 +306,7 @@ namespace tests {
                 // mov rcx, 0x0f1f2f3f4f5f6f7f
                 // mov rax, rcx
                 // ret
-                exec_test("`mov qword reg, reg`", {
+                new exec_test("`mov qword reg, reg`", {
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
@@ -329,7 +329,7 @@ namespace tests {
                 // mov rax, 0x0f0f0f0f0f0f0f0f
                 // mov al, 0
                 // ret
-                exec_test("`mov byte reg, imm", {
+                new exec_test("`mov byte reg, imm", {
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
@@ -361,7 +361,7 @@ namespace tests {
                 // mov rax, [rbp - 8]
                 // mov rbp, rcx ; restore rbp
                 // ret
-                exec_test("`mov mem reg` without SIB", {
+                new exec_test("`mov mem reg` without SIB", {
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
@@ -439,7 +439,7 @@ namespace tests {
                 // mov [rsp - 8], al
                 // mov rax, [rsp - 8]
                 // ret
-                exec_test("`mov mem reg` with SIB", {
+                new exec_test("`mov mem reg` with SIB", {
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
@@ -497,7 +497,7 @@ namespace tests {
                 // push rax
                 // pop rax
                 // ret
-                exec_test("`push/pop`", {
+                new exec_test("`push/pop`", {
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
@@ -524,7 +524,7 @@ namespace tests {
                 // mov BYTE [rsp - 8], 0
                 // mov rax, [rsp - 8]
                 // ret
-                exec_test("`mov imm`", {
+                new exec_test("`mov imm`", {
                         {
                                 .tag = mnemo_t::tag_t::Mov,
                                 .width = mnemo_t::width_t::Qword,
