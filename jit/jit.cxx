@@ -1,8 +1,9 @@
 #include "jit.hxx"
 
 #include <stdexcept>
-#include <sys/mman.h>
 #include <cstring>
+
+#include "../os/alloc.hxx"
 
 namespace jit {
     // The function executes the code at pointer mc as if it was a `jit_func_t` function.
@@ -11,7 +12,7 @@ namespace jit {
         // malicous programs which overflow the buffer and continue executing.
         // Extend buffer to accomodate `ud2` trap.
         size_t buf_len = len + 2;
-        void *exec_mc = mmap(nullptr, buf_len, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        void *exec_mc = alloc_executable(len);
         if (exec_mc == nullptr) {
             throw std::logic_error("mmap failed");
         }
@@ -22,11 +23,13 @@ namespace jit {
         reinterpret_cast<char *>(exec_mc)[buf_len - 2] = 0x0F;
         reinterpret_cast<char *>(exec_mc)[buf_len - 1] = 0x0B;
 
+        flush_instruction_cache(exec_mc, buf_len);
+
         auto func = (jit_func_t) exec_mc;
 
         i64 execution_result = func();
 
-        munmap(exec_mc, buf_len);
+        dealloc(exec_mc, buf_len);
 
         return execution_result;
     }
