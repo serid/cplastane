@@ -32,8 +32,8 @@ namespace test {
 
     public:
         Test(string &&name, Input &&input, Output &&expected_output, process_f process, output_printer_f output_printer)
-                : name(name), input(input), expected_output(expected_output), process(process),
-                  output_printer(output_printer) {}
+                : name(std::move(name)), input(std::move(input)), expected_output(std::move(expected_output)),
+                  process(process), output_printer(output_printer) {}
 
         virtual auto run() const & -> bool override {
             std::cout << ">> Test \"" << this->name << "\".\n";
