@@ -24,9 +24,6 @@ namespace tests {
         auto process = [](vector<mnemo_t> mnemos) -> vector<u8> {
             return assembly::assemble(mnemos);
         };
-        auto comparator = [](const vector<u8> &vec1, const vector<u8> &vec2) -> bool {
-            return vec1 == vec2;
-        };
         auto output_printer = [](const vector<u8> &vec) -> void {
             std::cout << "[";
             for (const u8 &n : vec) {
@@ -80,7 +77,7 @@ namespace tests {
                               },
                               {0x48, 0xb9, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0xb9, 0x0a, 0x0a, 0x00, 0x00,
                                0x66, 0x89, 0xd1, 0x88, 0xd1, 0x48, 0xc7, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00},
-                              process, comparator, output_printer
+                              process, output_printer
                 ),
 
                 // bytecode test
@@ -152,7 +149,7 @@ namespace tests {
                               },
                               {0x01, 0xcb, 0x83, 0xc0, 0x64, 0x83, 0xc3, 0x64, 0x81, 0xc3, 0x10, 0x27, 0x00, 0x00, 0x03,
                                0x1e, 0x01, 0x1e, 0x80, 0x06, 0x64, 0x66, 0x81, 0x06, 0x10, 0x27},
-                              process, comparator, output_printer
+                              process, output_printer
                 ),
 
                 // bytecode test
@@ -196,7 +193,7 @@ namespace tests {
                                       },
                               }, {0x48, 0xb9, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0xb9, 0x0a, 0x0a, 0x00, 0x00, 0x66,
                                   0x89, 0xd1, 0x88, 0xd1, 0x48, 0xc7, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00},
-                              process, comparator, output_printer
+                              process, output_printer
                 ),
 
                 // bytecode test
@@ -243,7 +240,7 @@ namespace tests {
                                       },
                               }, {0x53, 0x6a, 0x64, 0x68, 0xe8, 0x03, 0x00, 0x00, 0x67, 0xff, 0x74, 0x86, 0xf6, 0x5b, 0x67, 0x8f,
                                   0x44, 0x86, 0xf6},
-                              process, comparator, output_printer
+                              process, output_printer
                 ),
         };
 
@@ -255,9 +252,6 @@ namespace tests {
         auto process = [](vector<mnemo_t> mnemos) -> i64 {
             vector<u8> bytecode = assembly::assemble(mnemos);
             return jit::eval_mc(bytecode.data(), bytecode.size());
-        };
-        auto comparator = [](const i64 &num1, const i64 &num2) -> bool {
-            return num1 == num2;
         };
         auto output_printer = [](const i64 &num1) -> void {
             std::cout << "(" << num1 << ")";
@@ -279,7 +273,7 @@ namespace tests {
                                 .tag = mnemo_t::tag_t::Ret,
                                 .width = mnemo_t::width_t::NotSet,
                         },
-                }, 100, process, comparator, output_printer),
+                }, 100, process, output_printer),
 
                 // mov ecx, 0xff00
                 // mov eax, ecx
@@ -301,7 +295,7 @@ namespace tests {
                                 .tag = mnemo_t::tag_t::Ret,
                                 .width = mnemo_t::width_t::NotSet,
                         },
-                }, 0xff00, process, comparator, output_printer),
+                }, 0xff00, process, output_printer),
 
                 // mov rcx, 0x0f1f2f3f4f5f6f7f
                 // mov rax, rcx
@@ -323,7 +317,7 @@ namespace tests {
                                 .tag = mnemo_t::tag_t::Ret,
                                 .width = mnemo_t::width_t::NotSet,
                         },
-                }, 0x0f1f2f3f4f5f6f7f, process, comparator, output_printer),
+                }, 0x0f1f2f3f4f5f6f7f, process, output_printer),
 
                 // Simple mov test. Second mov superimposes value on a previous value.
                 // mov rax, 0x0f0f0f0f0f0f0f0f
@@ -346,7 +340,7 @@ namespace tests {
                                 .tag = mnemo_t::tag_t::Ret,
                                 .width = mnemo_t::width_t::NotSet,
                         }
-                }, 0x0f0f0f0f0f0f0f00, process, comparator, output_printer),
+                }, 0x0f0f0f0f0f0f0f00, process, output_printer),
 
                 // Simple `mov mem reg` test without SIB. Second mov superimposes value on a previous value.
                 // Saving rbp is neccesary to use rbp as a stack pointer register which is needed because
@@ -429,7 +423,7 @@ namespace tests {
                                 .tag = mnemo_t::tag_t::Ret,
                                 .width = mnemo_t::width_t::NotSet,
                         },
-                }, 0x0f0f0f0f0f0f0f00, process, comparator, output_printer),
+                }, 0x0f0f0f0f0f0f0f00, process, output_printer),
 
                 // Simple `mov mem reg` test with SIB. Second mov superimposes value on a previous value.
                 //
@@ -489,7 +483,7 @@ namespace tests {
                                 .tag = mnemo_t::tag_t::Ret,
                                 .width = mnemo_t::width_t::NotSet,
                         },
-                }, 0x0f0f0f0f0f0f0f00, process, comparator, output_printer),
+                }, 0x0f0f0f0f0f0f0f00, process, output_printer),
 
                 // `push/pop` test.
                 //
@@ -518,7 +512,7 @@ namespace tests {
                                 .tag = mnemo_t::tag_t::Ret,
                                 .width = mnemo_t::width_t::NotSet,
                         },
-                }, 0x0f0f0f0f0f0f0f00, process, comparator, output_printer),
+                }, 0x0f0f0f0f0f0f0f00, process, output_printer),
 
                 // mov QWORD [rsp - 8], 0x8f8f8f8f ; will be sign-extended to 64 bits
                 // mov BYTE [rsp - 8], 0
@@ -562,7 +556,7 @@ namespace tests {
                                 .tag = mnemo_t::tag_t::Ret,
                                 .width = mnemo_t::width_t::NotSet,
                         },
-                }, u64_to_i64(0xffffffff8f8f8f00), process, comparator, output_printer),
+                }, u64_to_i64(0xffffffff8f8f8f00), process, output_printer),
         };
 
         return test::run_test_group(tests);

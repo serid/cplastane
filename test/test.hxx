@@ -21,7 +21,6 @@ namespace test {
     class Test : public TestBase {
     public:
         typedef std::function<Output(const Input &)> process_f;
-        typedef std::function<bool(const Output &, const Output &)> comparator_f;
         typedef std::function<void(const Output &)> output_printer_f;
 
     private:
@@ -29,20 +28,18 @@ namespace test {
         Input input;
         Output expected_output;
         process_f process;
-        comparator_f comparator;
         output_printer_f output_printer;
 
     public:
-        Test(string &&name, Input &&input, Output &&expected_output, process_f process, comparator_f comparator,
-             output_printer_f output_printer) : name(name), input(input), expected_output(expected_output),
-                                                process(process), comparator(comparator),
-                                                output_printer(output_printer) {}
+        Test(string &&name, Input &&input, Output &&expected_output, process_f process, output_printer_f output_printer)
+                : name(name), input(input), expected_output(expected_output), process(process),
+                  output_printer(output_printer) {}
 
         virtual auto run() const & -> bool override {
             std::cout << ">> Test \"" << this->name << "\".\n";
 
             Output actual_output = this->process(this->input);
-            bool do_outputs_compare = this->comparator(actual_output, this->expected_output);
+            bool do_outputs_compare = actual_output == this->expected_output;
             if (do_outputs_compare) {
                 std::cout << "[+] Output check successful.\n";
                 std::cout << "Output: ";
@@ -63,10 +60,6 @@ namespace test {
     };
 
     class BoolTest : public TestBase {
-        static auto compare_bool(bool b1, bool b2) -> bool {
-            return b1 == b2;
-        }
-
         static auto print_bool(bool b) -> void {
             std::cout << b;
         }
@@ -81,7 +74,7 @@ namespace test {
 
         BoolTest(string &&name, std::function<bool()> process) : embed(std::move(name), std::monostate(), true,
                                                                        [=](std::monostate) -> bool { return process(); },
-                                                                       compare_bool, print_bool) {}
+                                                                       print_bool) {}
     };
 
     using TestGroup = vector<const TestBase *>;
