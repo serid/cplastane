@@ -7,8 +7,8 @@ add_executable(cplastane
         main.cpp
         int.hxx
         strvec.hxx
-        util.cxx
-        util.hxx
+        util/util.cxx
+        util/util.hxx
         assembly/assembler.cxx
         assembly/assembler.hxx
         jit/jit.cxx
