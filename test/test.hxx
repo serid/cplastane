@@ -62,7 +62,7 @@ namespace test {
         }
     };
 
-    class SimpleTest : public TestBase {
+    class BoolTest : public TestBase {
         static auto compare_bool(bool b1, bool b2) -> bool {
             return b1 == b2;
         }
@@ -71,17 +71,17 @@ namespace test {
             std::cout << b;
         }
 
-        typedef Test<std::monostate, bool> InnerSimpleTest;
-        InnerSimpleTest embed;
+        typedef Test<std::monostate, bool> InnerTest;
+        InnerTest embed;
 
     public:
         virtual auto run() const & -> bool override {
             return embed.run();
         }
 
-        SimpleTest(string &&name, std::function<bool()> process) : embed(std::move(name), std::monostate(), true,
-                                                                         [=](std::monostate) -> bool { return process(); },
-                                                                         compare_bool, print_bool) {}
+        BoolTest(string &&name, std::function<bool()> process) : embed(std::move(name), std::monostate(), true,
+                                                                       [=](std::monostate) -> bool { return process(); },
+                                                                       compare_bool, print_bool) {}
     };
 
     using TestGroup = vector<const TestBase *>;
