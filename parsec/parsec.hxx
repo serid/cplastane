@@ -55,37 +55,13 @@ namespace parsec {
 
     template<typename T>
     auto consume_prefix_str(std::string_view tail, std::string_view prefix, T on_success) -> parser_result<T> {
-        std::string_view prefix_rest = prefix;
-        for (;;) {
-            /* // Alternative implementation
-            if (parser_result<char> result1 = scan_char(prefix_rest)) {
-                tail = std::get<0>(*result1);
-                char prefix_char = std::get<1>(*result1);
-
-                if (parser_result<std::monostate> result2 = consume_prefix_char(tail, prefix_char, std::monostate())) {
-                    tail = std::get<0>(*result2);
-                    std::monostate is_successful = std::get<1>(*result2);
-
-                    // Continue the loop
-                } else {
-                    return std::nullopt;
-                }
-            } else {
-                return std::make_tuple(tail, on_success);
-            }*/
-
-            if (prefix_rest.empty()) {
-                return std::make_tuple(tail, on_success);
-            }
-            if (tail.empty()) {
+        if (tail.size() < prefix.size())
+            return std::nullopt;
+        for (size_t i = 0; i < prefix.size(); ++i) {
+            if (tail[i] != prefix[i])
                 return std::nullopt;
-            }
-            if (prefix_rest[0] != tail[0]) {
-                return std::nullopt;
-            }
-            prefix_rest = prefix_rest.substr(1);
-            tail = tail.substr(1);
         }
+        return std::make_tuple(tail.substr(prefix.size()), on_success);
     }
 
     // Tries to apply the parsers in the list `funs` in order, until one of them succeeds. Returns the value of the succeeding parser.
