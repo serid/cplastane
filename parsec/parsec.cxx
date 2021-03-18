@@ -26,8 +26,8 @@ namespace parsec {
 
     auto scan_char(std::string_view tail) -> parser_result<char> {
         if (tail.empty())
-            return std::nullopt;
-        return std::make_tuple(tail.substr(1), tail[0]);
+            return parser_result<char>();
+        return make_option(std::make_tuple(tail.substr(1), tail[0]));
     }
 
     auto parse_i64(std::string_view tail) -> parser_result<i64> {
@@ -38,7 +38,7 @@ namespace parsec {
         i64 result = 0;
 
         if (tail.empty())
-            return std::nullopt;
+            return parser_result<i64>();
 
         bool is_negative = tail[0] == '-';
         if (is_negative)
@@ -46,7 +46,7 @@ namespace parsec {
 
         // If there is no digit, return error
         if (tail.empty() || !is_digit(tail[0]))
-            return std::nullopt;
+            return parser_result<i64>();
 
         // Continues while first char in `tail` is a digit
         // Each iteration slices off one char
@@ -59,6 +59,6 @@ namespace parsec {
             result = -result;
         }
 
-        return std::make_tuple(tail, result);
+        return make_option(std::make_tuple(tail, result));
     }
 }

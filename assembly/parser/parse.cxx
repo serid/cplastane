@@ -32,10 +32,10 @@ static auto parse_register(std::string_view tail) -> parser_result<mnemo_t::arg_
         tail = std::get<0>(*result1);
         result = std::get<1>(*result1);
     } else {
-        return std::nullopt;
+        return parser_result<mnemo_t::arg_t::reg_t>();
     }
 
-    return std::make_tuple(tail, result);
+    return make_option(std::make_tuple(tail, result));
 }
 
 static auto parse_arg(std::string_view tail) -> parser_result<mnemo_t::arg_t> {
@@ -58,7 +58,7 @@ static auto parse_arg(std::string_view tail) -> parser_result<mnemo_t::arg_t> {
         throw std::logic_error("todo");
     }
 
-    return std::make_tuple(tail, result);
+    return make_option(std::make_tuple(tail, result));
 }
 
 static auto parse_line(std::string_view tail) -> parser_result<mnemo_t> {
@@ -76,7 +76,7 @@ static auto parse_line(std::string_view tail) -> parser_result<mnemo_t> {
 
     throw std::logic_error("todo");
 
-    return std::make_tuple(tail, result);
+    return make_option(std::make_tuple(tail, result));
 }
 
 namespace assembly {
