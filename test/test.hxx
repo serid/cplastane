@@ -13,6 +13,8 @@ namespace test {
     class TestBase {
     public:
         virtual auto run() const & -> bool = 0;
+
+        virtual ~TestBase() {};
     };
 
     template<typename Input, typename Output>
