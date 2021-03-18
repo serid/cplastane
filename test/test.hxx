@@ -7,6 +7,8 @@
 #include "../int.hxx"
 #include "../strvec.hxx"
 
+#include <variant>
+
 namespace test {
     class TestBase {
     public:
@@ -15,10 +17,12 @@ namespace test {
 
     template<typename Input, typename Output>
     class Test : public TestBase {
+    public:
         typedef std::function<Output(const Input &)> process_f;
         typedef std::function<bool(const Output &, const Output &)> comparator_f;
         typedef std::function<void(const Output &)> output_printer_f;
 
+    private:
         string name;
         Input input;
         Output expected_output;
@@ -54,6 +58,28 @@ namespace test {
             }
             return do_outputs_compare;
         }
+    };
+
+    class SimpleTest : public TestBase {
+        static auto compare_bool(bool b1, bool b2) -> bool {
+            return b1 == b2;
+        }
+
+        static auto print_bool(bool b) -> void {
+            std::cout << b;
+        }
+
+        typedef Test<std::monostate, bool> InnerSimpleTest;
+        InnerSimpleTest embed;
+
+    public:
+        virtual auto run() const & -> bool override {
+            return embed.run();
+        }
+
+        SimpleTest(string &&name, std::function<bool()> process) : embed(std::move(name), std::monostate(), true,
+                                                                         [=](std::monostate) -> bool { return process(); },
+                                                                         compare_bool, print_bool) {}
     };
 
     using TestGroup = vector<const TestBase *>;
