@@ -7,8 +7,8 @@ add_executable(cplastane
         main.cpp
         int.hxx
         strvec.hxx
-        util.cxx
-        util.hxx
+        util/util.cxx
+        util/util.hxx
         assembly/assembler.cxx
         assembly/assembler.hxx
         jit/jit.cxx
@@ -18,12 +18,14 @@ add_executable(cplastane
         test/test.hxx
         os/alloc.cxx
         os/alloc.hxx
+        util/option/option.hxx
         assembly/parser/parse.cxx
         assembly/parser/parse.hxx
         parsec/parsec.cxx
         parsec/parsec.hxx
-        parsec/parsec_template.hxx
-        assembly/parser/parsec_impl.cxx
+        test/test.cxx
+        parsec/tests/tests.cxx
+        parsec/tests/tests.hxx
         )
 
 target_compile_options(cplastane PUBLIC -Wall -Wextra -Werror -Wno-missing-field-initializers -Wno-unused-variable -Wno-unused-function)
