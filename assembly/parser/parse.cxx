@@ -44,7 +44,7 @@ static auto parse_arg(std::string_view tail) -> parser_result<mnemo_t::arg_t> {
     // eax
     // [eax]
 
-    
+
     mnemo_t::arg_t result;
     if (parser_result<i64> result1 = parse_i64(tail)) {
         tail = std::get<0>(*result1);
@@ -67,7 +67,7 @@ static auto parse_line(std::string_view tail) -> parser_result<mnemo_t> {
 
     mnemo_t result;
 
-    
+
     std::tuple<std::string_view, string> result1 = scan_while_char(tail, [](char c) { return c != ' '; });
     tail = std::get<0>(result1);
     string mnemo_name = std::get<1>(result1);
@@ -85,7 +85,7 @@ namespace assembly {
             // Parses multiline assembly text
 
             vector<mnemo_t> result{};
-            
+
             for (;;) {
                 if (parser_result<mnemo_t> result1 = parse_line(tail)) {
                     // If result is available, continue iteration
