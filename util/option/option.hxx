@@ -14,10 +14,19 @@ public:
         return Option<T>();
     }
 
-    auto bind(std::function<Option<T>(T)> k) -> Option<T> {
+    // Haskell Monad.>>=, Rust Option::and_then()
+    template<class U>
+    auto bind(std::function<Option<U>(T)> k) -> Option<U> {
         if (this->has_value())
             return k(**this);
-        return Option<T>();
+        return Option<U>();
+    }
+
+    // Haskell Monad.<|>, Rust Option::or_else()
+    auto choice(std::function<Option<T>()> k) -> Option<T> {
+        if (this->has_value())
+            return *this;
+        return k();
     }
 
     /*
