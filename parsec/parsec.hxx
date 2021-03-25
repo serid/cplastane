@@ -54,17 +54,4 @@ namespace parsec {
         }
         return make_option(std::make_tuple(tail.substr(prefix.size()), on_success));
     }
-
-    // Tries to apply the parsers in the list `funs` in order, until one of them succeeds. Returns the value of the succeeding parser.
-    template<typename T>
-    auto choice_combinator(std::string_view tail, vector<parser_type<T, std::monostate>> funs) -> parser_result<T> {
-        for (auto &fun : funs) {
-            if (parser_result<T> result1 = fun(tail, std::monostate())) {
-                tail = std::get<0>(*result1);
-                T fun_result = std::get<1>(*result1);
-                return make_option(std::make_tuple(tail, fun_result));
-            }
-        }
-        return parser_result<T>();
-    }
 }

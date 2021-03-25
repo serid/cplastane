@@ -10,32 +10,13 @@ using namespace assembly;
 using namespace parsec;
 
 static auto parse_register(std::string_view tail) -> parser_result<mnemo_t::arg_t::reg_t> {
-    mnemo_t::arg_t::reg_t result;
-    /*
-#define test_prefix_combinator(id, prefix, value)\
-            if (std::optional<std::tuple<std::string_view, std::monostate>> result##id = consume_prefix_str(tail, prefix)) {\
-                tail = std::get<0>(*result##id);\
-                result = value;\
-            } else
-*/
-
-    vector<parser_type<mnemo_t::arg_t::reg_t, std::monostate>> funs{
-            [](std::string_view tail, std::monostate) -> parser_result<mnemo_t::arg_t::reg_t> {
-                return consume_prefix_str(tail, "eax", mnemo_t::arg_t::reg_t::Eax);
-            },
-            [](std::string_view tail, std::monostate) -> parser_result<mnemo_t::arg_t::reg_t> {
+    return consume_prefix_str(tail, "eax", mnemo_t::arg_t::reg_t::Eax).choice(
+            [tail]() -> parser_result<mnemo_t::arg_t::reg_t> {
                 return consume_prefix_str(tail, "ebx", mnemo_t::arg_t::reg_t::Ebx);
-            },
-    };
-
-    if (parser_result<mnemo_t::arg_t::reg_t> result1 = choice_combinator(tail, funs)) {
-        tail = std::get<0>(*result1);
-        result = std::get<1>(*result1);
-    } else {
-        return parser_result<mnemo_t::arg_t::reg_t>();
-    }
-
-    return make_option(std::make_tuple(tail, result));
+            }).bind<std::tuple<std::string_view, mnemo_t::arg_t::reg_t>>(
+            [](std::tuple<std::string_view, mnemo_t::arg_t::reg_t> tuple) -> parser_result<mnemo_t::arg_t::reg_t> {
+                return make_option(tuple);
+            });
 }
 
 static auto parse_arg(std::string_view tail) -> parser_result<mnemo_t::arg_t> {
