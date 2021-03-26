@@ -9,8 +9,8 @@ add_executable(cplastane
         strvec.hxx
         util/util.cxx
         util/util.hxx
-        assembly/assembler.cxx
-        assembly/assembler.hxx
+        assembly/assembly.cxx
+        assembly/assembly.hxx
         jit/jit.cxx
         jit/jit.hxx
         tests/assembly.cxx
@@ -19,8 +19,8 @@ add_executable(cplastane
         os/alloc.cxx
         os/alloc.hxx
         util/option/option.hxx
-        assembly/parser/parse.cxx
-        assembly/parser/parse.hxx
+        assembly/parse/parse.cxx
+        assembly/parse/parse.hxx
         parsec/parsec.cxx
         parsec/parsec.hxx
         test/test.cxx
