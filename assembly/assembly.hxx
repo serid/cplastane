@@ -73,6 +73,10 @@ namespace assembly {
             static arg_t reg(reg_t reg);
 
             static arg_t mem(reg_t base, reg_t index, memory_t::scale_t scale, i32 disp);
+
+            auto print() const -> void;
+
+            auto static print_reg(reg_t reg) -> void;
         };
 
         enum class tag_t {
@@ -94,6 +98,10 @@ namespace assembly {
         } width;
 
         arg_t a1, a2;
+
+        auto print() const -> void;
+
+        auto static print_width(width_t width) -> void;
     };
 
     auto assemble_mnemo(vector<u8> &out, const mnemo_t &mnemo) -> void;

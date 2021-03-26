@@ -1,5 +1,6 @@
 #include "assembly.hxx"
 
+#include <iostream>
 #include <stdexcept>
 #include <limits>
 
@@ -667,5 +668,170 @@ namespace assembly {
                 .disp=disp,
         };
         return o;
+    }
+
+    auto mnemo_t::arg_t::print() const -> void {
+        switch (this->tag) {
+            case tag_t::Immediate:
+                cout << this->data.imm;
+                break;
+            case tag_t::Register:
+                print_reg(this->data.reg);
+                break;
+            case tag_t::Memory:
+                throw logic_error("todo");
+            default:
+                throw logic_error("unreachable");
+        }
+    }
+
+    auto mnemo_t::arg_t::print_reg(reg_t reg) -> void {
+        switch (reg) {
+            case reg_t::Al:
+                cout << "al";
+                break;
+            case reg_t::Bl:
+                cout << "bl";
+                break;
+            case reg_t::Cl:
+                cout << "cl";
+                break;
+            case reg_t::Dl:
+                cout << "dl";
+                break;
+            case reg_t::Ah:
+                cout << "ah";
+                break;
+            case reg_t::Bh:
+                cout << "bh";
+                break;
+            case reg_t::Ch:
+                cout << "ch";
+                break;
+            case reg_t::Dh:
+                cout << "dh";
+                break;
+            case reg_t::Ax:
+                cout << "ax";
+                break;
+            case reg_t::Bx:
+                cout << "bx";
+                break;
+            case reg_t::Cx:
+                cout << "cx";
+                break;
+            case reg_t::Dx:
+                cout << "dx";
+                break;
+            case reg_t::Eax:
+                cout << "eax";
+                break;
+            case reg_t::Ebx:
+                cout << "ebx";
+                break;
+            case reg_t::Ecx:
+                cout << "ecx";
+                break;
+            case reg_t::Edx:
+                cout << "edx";
+                break;
+            case reg_t::Esp:
+                cout << "esp";
+                break;
+            case reg_t::Ebp:
+                cout << "ebp";
+                break;
+            case reg_t::Esi:
+                cout << "esi";
+                break;
+            case reg_t::Edi:
+                cout << "edi";
+                break;
+            case reg_t::Rax:
+                cout << "rax";
+                break;
+            case reg_t::Rbx:
+                cout << "rbx";
+                break;
+            case reg_t::Rcx:
+                cout << "rcx";
+                break;
+            case reg_t::Rdx:
+                cout << "rdx";
+                break;
+            case reg_t::Rsp:
+                cout << "rsp";
+                break;
+            case reg_t::Rbp:
+                cout << "rbp";
+                break;
+            case reg_t::Rsi:
+                cout << "rsi";
+                break;
+            case reg_t::Rdi:
+                cout << "rdi";
+                break;
+            default:
+                throw logic_error("unsupported register. print_reg");
+        }
+    }
+
+    auto mnemo_t::print() const -> void {
+        cout << "mnemo_t(";
+        switch (this->tag) {
+            case tag_t::Mov:
+                cout << "mov";
+                break;
+            case tag_t::Add:
+                cout << "add";
+                break;
+            case tag_t::Push:
+                cout << "push";
+                break;
+            case tag_t::Pop:
+                cout << "pop";
+                break;
+            case tag_t::Ret:
+                cout << "ret";
+                break;
+            default:
+                throw logic_error("unimplemented mnemo.tag");
+        }
+
+        std::cout << ' ';
+
+        print_width(this->width);
+
+        std::cout << ' ';
+
+        this->a1.print();
+
+        std::cout << ' ';
+
+        this->a2.print();
+
+        cout << ")";
+    }
+
+    auto mnemo_t::print_width(width_t width) -> void {
+        switch (width) {
+            case width_t::Byte:
+                cout << "BYTE";
+                break;
+            case width_t::Word:
+                cout << "WORD";
+                break;
+            case width_t::Dword:
+                cout << "DWORD";
+                break;
+            case width_t::Qword:
+                cout << "QWORD";
+                break;
+            case width_t::NotSet:
+                cout << "NotSet";
+                break;
+            default:
+                throw logic_error("unimplemented width_t. print_width");
+        }
     }
 }
