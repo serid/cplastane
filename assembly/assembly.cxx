@@ -641,4 +641,31 @@ namespace assembly {
         }
         return result;
     }
+
+    mnemo_t::arg_t mnemo_t::arg_t::imm(i64 imm) {
+        return {
+                .tag=tag_t::Immediate,
+                .data {.imm = imm},
+        };
+    }
+
+    mnemo_t::arg_t mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t reg) {
+        arg_t o;
+        o.tag = tag_t::Register;
+        o.data.reg = reg;
+        return o;
+    }
+
+    mnemo_t::arg_t mnemo_t::arg_t::mem(mnemo_t::arg_t::reg_t base, mnemo_t::arg_t::reg_t index,
+                                       mnemo_t::arg_t::memory_t::scale_t scale, i32 disp) {
+        arg_t o;
+        o.tag = tag_t::Memory;
+        o.data.memory = {
+                .base=base,
+                .index=index,
+                .scale=scale,
+                .disp=disp,
+        };
+        return o;
+    }
 }
