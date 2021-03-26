@@ -3,19 +3,21 @@
 #include <stdexcept>
 #include <limits>
 
+using namespace std;
+
 namespace assembly {
     static auto can_be_encoded_in_32bits(i64 n) -> bool {
         // True if n is in union of sets of valid values for i32 and u32
-        // return (std::numeric_limits<i32>::min() <= n && n <= std::numeric_limits<i32>::max()) ||
-        //        (std::numeric_limits<u32>::min() <= n && n <= std::numeric_limits<u32>::max());
-        return std::numeric_limits<i32>::min() <= n && n <= std::numeric_limits<u32>::max();
+        // return (numeric_limits<i32>::min() <= n && n <= numeric_limits<i32>::max()) ||
+        //        (numeric_limits<u32>::min() <= n && n <= numeric_limits<u32>::max());
+        return numeric_limits<i32>::min() <= n && n <= numeric_limits<u32>::max();
     }
 
     static auto can_be_encoded_in_8bits(i64 n) -> bool {
         // True if n is in union of sets of valid values for i8 and u8
-        // return (std::numeric_limits<i8>::min() <= n && n <= std::numeric_limits<i8>::max()) ||
-        //        (std::numeric_limits<u8>::min() <= n && n <= std::numeric_limits<u8>::max());
-        return std::numeric_limits<i8>::min() <= n && n <= std::numeric_limits<u8>::max();
+        // return (numeric_limits<i8>::min() <= n && n <= numeric_limits<i8>::max()) ||
+        //        (numeric_limits<u8>::min() <= n && n <= numeric_limits<u8>::max());
+        return numeric_limits<i8>::min() <= n && n <= numeric_limits<u8>::max();
     }
 
     static auto register_width(mnemo_t::arg_t::reg_t reg) -> mnemo_t::width_t {
@@ -57,7 +59,7 @@ namespace assembly {
             case mnemo_t::arg_t::reg_t::Rdi:
                 return mnemo_t::width_t::Qword;
             default:
-                throw std::logic_error("Unsupported register! register_width");
+                throw logic_error("Unsupported register! register_width");
         }
     }
 
@@ -105,7 +107,7 @@ namespace assembly {
             case mnemo_t::arg_t::reg_t::Rdi:
                 return 0b111;
             default:
-                throw std::logic_error("Unsupported register!");
+                throw logic_error("Unsupported register!");
         }
     }
 
@@ -113,7 +115,7 @@ namespace assembly {
     static auto scale_to_num(mnemo_t::arg_t::memory_t::scale_t scale) -> u8 {
         switch (scale) {
             case mnemo_t::arg_t::memory_t::scale_t::S0:
-                throw std::logic_error("Unexpected scale_t::S0 @ scale_to_num");
+                throw logic_error("Unexpected scale_t::S0 @ scale_to_num");
             case mnemo_t::arg_t::memory_t::scale_t::S1:
                 return 0b00;
             case mnemo_t::arg_t::memory_t::scale_t::S2:
@@ -123,7 +125,7 @@ namespace assembly {
             case mnemo_t::arg_t::memory_t::scale_t::S8:
                 return 0b11;
             default:
-                throw std::logic_error("Scale is Undef.");
+                throw logic_error("Scale is Undef.");
         }
     }
 
@@ -140,7 +142,7 @@ namespace assembly {
         if (width == mnemo_t::width_t::Qword) {
             width = mnemo_t::width_t::Dword;
             if (!can_be_encoded_in_32bits(imm))
-                throw std::logic_error(msg);
+                throw logic_error(msg);
         }
     }
 
@@ -148,7 +150,7 @@ namespace assembly {
     // In 64 bit mode switches address width from 64 bits to 32 bits
     static auto push_ASOR_if_dword(vector<u8> &out, const mnemo_t::arg_t::memory_t &memory_field) -> void {
         if (register_width(memory_field.index) != register_width(memory_field.base)) {
-            throw std::logic_error(
+            throw logic_error(
                     "Assertion failed: index and base fields have differing widths @ push_ASOR_if_dword");
         }
         if (register_width(memory_field.base) == mnemo_t::width_t::Dword) {
@@ -239,7 +241,7 @@ namespace assembly {
                 break;
             }
             default:
-                throw std::logic_error("Unsupported width! @ append_imm_upto_64");
+                throw logic_error("Unsupported width! @ append_imm_upto_64");
         }
     }
 
@@ -258,7 +260,7 @@ namespace assembly {
                 out.push_back(opcode2);
                 break;
             default:
-                throw std::logic_error("Unsupported width!");
+                throw logic_error("Unsupported width!");
         }
     }
 
@@ -321,7 +323,7 @@ namespace assembly {
             // mod reg rm    ss index base
             if ((mod == 0b00 && memory.base == mnemo_t::arg_t::reg_t::Ebp) ||
                 memory.index == mnemo_t::arg_t::reg_t::Esp) {
-                throw std::logic_error("Unsupported operation.");
+                throw logic_error("Unsupported operation.");
                 // TO DO: handle corner cases
             }
 
@@ -374,7 +376,7 @@ namespace assembly {
             memory_arg = &mnemo.a2;
             register_arg = &mnemo.a1;
         } else {
-            throw std::logic_error("Unexpected mnemo shape @ assemble_memory_register_mnemos_template");
+            throw logic_error("Unexpected mnemo shape @ assemble_memory_register_mnemos_template");
         }
 
         u8 reg = reg_to_number(register_arg->data.reg);
@@ -393,7 +395,7 @@ namespace assembly {
 
     static auto assemble_mnemo_mov(vector<u8> &out, const mnemo_t &mnemo) -> void {
         if (mnemo.tag != mnemo_t::tag_t::Mov)
-            throw std::logic_error("Wrong mnemo!");
+            throw logic_error("Wrong mnemo!");
 
         if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register &&
             mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register) {
@@ -437,13 +439,13 @@ namespace assembly {
                                                "Attempted to move immediate 64 bit value to memory using MOV @ assemble_mnemo_mov");
             append_imm_upto_64(out, width, mnemo.a2.data.imm);
         } else {
-            throw std::logic_error("Unsupported mov shape!");
+            throw logic_error("Unsupported mov shape!");
         }
     }
 
     static auto assemble_mnemo_add(vector<u8> &out, const mnemo_t &mnemo) -> void {
         if (mnemo.tag != mnemo_t::tag_t::Add)
-            throw std::logic_error("Wrong mnemo!");
+            throw logic_error("Wrong mnemo!");
 
         if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register &&
             mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register) {
@@ -523,7 +525,7 @@ namespace assembly {
                                                "Attempted to add immediate 64 bit value to memory using MOV @ assemble_mnemo_add");
             append_imm_upto_64(out, width, mnemo.a2.data.imm);
         } else {
-            throw std::logic_error("Unsupported add shape!");
+            throw logic_error("Unsupported add shape!");
         }
     }
 
@@ -533,17 +535,17 @@ namespace assembly {
     static auto assemble_mnemo_push_pop_template(vector<u8> &out, const mnemo_t &mnemo) -> void {
         if (is_push) {
             if (mnemo.tag != mnemo_t::tag_t::Push)
-                throw std::logic_error("Wrong mnemo!");
+                throw logic_error("Wrong mnemo!");
         } else {
             if (mnemo.tag != mnemo_t::tag_t::Pop)
-                throw std::logic_error("Wrong mnemo!");
+                throw logic_error("Wrong mnemo!");
         }
 
         switch (mnemo.a1.tag) {
             case mnemo_t::arg_t::tag_t::Register: {
                 // In 64-bit mode, `push` and `pop` only accept 16-bit or 64-bit registers.
                 if (mnemo.width == mnemo_t::width_t::Byte || mnemo.width == mnemo_t::width_t::Dword) {
-                    throw std::logic_error(
+                    throw logic_error(
                             string("Unsupported register @ assemble_mnemo_") + (is_push ? "push" : "pop"));
                 }
                 u8 opcode = is_push ? 0x50 : 0x58;
@@ -556,7 +558,7 @@ namespace assembly {
             case mnemo_t::arg_t::tag_t::Memory: {
                 // In 64-bit mode, `push` and `pop` only accept 16-bit or 64-bit registers.
                 if (mnemo.width == mnemo_t::width_t::Byte || mnemo.width == mnemo_t::width_t::Dword) {
-                    throw std::logic_error(
+                    throw logic_error(
                             string("Unsupported register @ assemble_mnemo_") + (is_push ? "push" : "pop"));
                 }
                 u8 opcode = is_push ? 0xff : 0x8f;
@@ -576,11 +578,11 @@ namespace assembly {
             }
             case mnemo_t::arg_t::tag_t::Immediate: {
                 if (!is_push) {
-                    throw std::logic_error("Cannot `pop` into an immediate value.");
+                    throw logic_error("Cannot `pop` into an immediate value.");
                 }
 
                 if (mnemo.width == mnemo_t::width_t::Qword) {
-                    throw std::logic_error("Unsupported width! @ assemble_mnemo_push");
+                    throw logic_error("Unsupported width! @ assemble_mnemo_push");
                 }
 
                 // Encode `push`
@@ -589,7 +591,7 @@ namespace assembly {
                 break;
             }
             default:
-                throw std::logic_error(
+                throw logic_error(
                         string("Unsupported mnemo shape @ assemble_mnemo_") + (is_push ? "push" : "pop"));
         }
     }
@@ -598,12 +600,12 @@ namespace assembly {
         if (mnemo.width != mnemo_t::width_t::Byte && mnemo.width != mnemo_t::width_t::Word &&
             mnemo.width != mnemo_t::width_t::Dword && mnemo.width != mnemo_t::width_t::Qword &&
             mnemo.width != mnemo_t::width_t::NotSet)
-            throw std::logic_error("Unsupported width! assemble_mnemo");
+            throw logic_error("Unsupported width! assemble_mnemo");
         if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register && register_width(mnemo.a1.data.reg) != mnemo.width) {
-            throw std::logic_error("arg1 register width does not match instruction width!");
+            throw logic_error("arg1 register width does not match instruction width!");
         }
         if (mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register && register_width(mnemo.a2.data.reg) != mnemo.width) {
-            throw std::logic_error("arg2 register width does not match instruction width!");
+            throw logic_error("arg2 register width does not match instruction width!");
         }
 
         switch (mnemo.tag) {
@@ -628,7 +630,7 @@ namespace assembly {
                 break;
             }
             default:
-                throw std::logic_error("Unimplemented mnemo.tag!");
+                throw logic_error("Unimplemented mnemo.tag!");
         }
     }
 

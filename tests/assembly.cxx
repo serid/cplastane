@@ -6,6 +6,8 @@
 #include "../jit/jit.hxx"
 #include "../test/test.hxx"
 
+using namespace std;
+
 using assembly::mnemo_t;
 
 namespace tests {
@@ -25,11 +27,11 @@ namespace tests {
             return assembly::assemble(mnemos);
         };
         auto output_printer = [](const vector<u8> &vec) -> void {
-            std::cout << "[";
+            cout << "[";
             for (const u8 &n : vec) {
-                std::cout << std::hex << i32(n >> 4) << i32(n & 0x0f) << std::dec << ", ";
+                cout << hex << i32(n >> 4) << i32(n & 0x0f) << dec << ", ";
             }
-            std::cout << "]";
+            cout << "]";
         };
 
         using bytecode_test = test::Test<vector<mnemo_t>, vector<u8>>;
@@ -256,7 +258,7 @@ namespace tests {
             return jit::eval_mc(bytecode.data(), bytecode.size());
         };
         auto output_printer = [](const i64 &num1) -> void {
-            std::cout << "(" << num1 << ")";
+            cout << "(" << num1 << ")";
         };
 
         using exec_test = test::Test<vector<mnemo_t>, i64>;
