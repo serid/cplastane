@@ -9,8 +9,8 @@ add_executable(cplastane
         strvec.hxx
         util/util.cxx
         util/util.hxx
-        assembly/assembler.cxx
-        assembly/assembler.hxx
+        assembly/assembly.cxx
+        assembly/assembly.hxx
         jit/jit.cxx
         jit/jit.hxx
         tests/assembly.cxx

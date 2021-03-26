@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "../assembly/assembler.hxx"
+#include "../assembly/assembly.hxx"
 #include "../jit/jit.hxx"
 #include "../test/test.hxx"
 

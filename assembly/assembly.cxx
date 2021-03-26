@@ -1,4 +1,4 @@
-#include "assembler.hxx"
+#include "assembly.hxx"
 
 #include <stdexcept>
 #include <limits>
