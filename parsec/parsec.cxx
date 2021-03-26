@@ -4,33 +4,35 @@
 
 #include "parsec.hxx"
 
+using namespace std;
+
 static auto is_digit(char c) -> bool {
     return '0' <= c && c <= '9';
 }
 
 namespace parsec {
-    auto skip_while_char(std::string_view tail,
-                         std::function<bool(char)> predicate) -> infallible_parser_result<std::monostate> {
+    auto skip_while_char(string_view tail,
+                         function<bool(char)> predicate) -> infallible_parser_result<monostate> {
         for (; !tail.empty() && predicate(tail[0]); tail = tail.substr(1));
-        return std::make_tuple(tail, std::monostate());
+        return make_tuple(tail, monostate());
     }
 
     auto
-    scan_while_char(std::string_view tail, std::function<bool(char)> predicate) -> infallible_parser_result<string> {
+    scan_while_char(string_view tail, function<bool(char)> predicate) -> infallible_parser_result<string> {
         string result{};
         for (; !tail.empty() && predicate(tail[0]); tail = tail.substr(1)) {
             result.push_back(tail[0]);
         }
-        return std::make_tuple(tail, result);
+        return make_tuple(tail, result);
     }
 
-    auto scan_char(std::string_view tail) -> parser_result<char> {
+    auto scan_char(string_view tail) -> parser_result<char> {
         if (tail.empty())
             return parser_result<char>();
-        return make_option(std::make_tuple(tail.substr(1), tail[0]));
+        return make_option(make_tuple(tail.substr(1), tail[0]));
     }
 
-    auto parse_i64(std::string_view tail) -> parser_result<i64> {
+    auto parse_i64(string_view tail) -> parser_result<i64> {
         // Parses an i64 like
         // 100
         // -100
@@ -59,6 +61,6 @@ namespace parsec {
             result = -result;
         }
 
-        return make_option(std::make_tuple(tail, result));
+        return make_option(make_tuple(tail, result));
     }
 }
