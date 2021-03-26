@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../strvec.hxx"
-#include "../assembler.hxx"
+#include "../assembly.hxx"
 
 namespace assembly {
     namespace parse {
