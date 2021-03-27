@@ -1,6 +1,7 @@
 #include "parse.hxx"
 
 #include <exception>
+#include <iostream>
 
 #include "../../parsec/parsec.hxx"
 
@@ -101,25 +102,98 @@ static auto parse_arg(strive tail) -> OptionParserResult<arg_t> {
     // Parses an arg from text assembly like
     // 100
     // eax
-    // [eax]
+    // [eax * 2 + 100]
 
     OptionParserResult<arg_t> result =
             parse_i64(tail).bind<ParserResult<arg_t>>([](ParserResult<i64> result1) {
-                strive tail2 = result1.tail;
-                arg_t result = {
-                        .tag = arg_t::tag_t::Immediate,
-                        .data = {.imm = result1.data}
-                };
-                return make_option(ParserResult(tail2, result));
+                strive tail1 = result1.tail;
+                arg_t result = arg_t::imm(result1.data);
+                return make_option(ParserResult(tail1, result));
             }).choice([tail]() {
                 return parse_register(tail).bind<ParserResult<arg_t>>([](ParserResult<reg_t> result1) {
-                    strive tail2 = result1.tail;
-                    arg_t result = {
-                            .tag = arg_t::tag_t::Register,
-                            .data = {.reg = result1.data}
-                    };
-                    return make_option(ParserResult(tail2, result));
+                    strive tail1 = result1.tail;
+                    arg_t result = arg_t::reg(result1.data);
+                    return make_option(ParserResult(tail1, result));
                 });
+            }).choice([tail]() {
+                /* // A (failed) attempt to write parsing code using proper bindings
+                return consume_prefix_char<monostate>(tail, '[', monostate()).bind<ParserResult<arg_t>>(
+                        [](ParserResult<monostate> result1) {
+                            strive tail1 = result1.tail;
+                            return parse_register(tail1).bind<ParserResult<arg_t>>([](ParserResult<reg_t> result2) {
+                                strive tail2 = result2.tail;
+                                reg_t base = result2.data;
+                                reg_t index = result2.data;
+
+                                arg_t result = {
+                                        .tag = arg_t::tag_t::Register,
+                                        .data = {.reg = result2.data}
+                                };
+                                return make_option(ParserResult(tail2, result));
+                            });
+                        });
+                */
+
+                // Parse a memory operand
+                if (OptionParserResult<monostate> a = consume_prefix_char(tail, '[', monostate())) {
+                    if (OptionParserResult<reg_t> b = parse_register(a.value().tail)) {
+                        reg_t base = b.value().data;
+
+                        // Maybe parse an index with scale
+                        reg_t index = reg_t::Undef;
+                        arg_t::memory_t::scale_t scale = arg_t::memory_t::scale_t::S0;
+                        if (OptionParserResult<monostate> c = consume_prefix_str(b.value().tail, " + ", monostate())) {
+                            if (OptionParserResult<reg_t> d = parse_register(c.value().tail)) {
+                                index = d.value().data;
+                                b.value().tail = d.value().tail;
+
+                                if (OptionParserResult<monostate> e = consume_prefix_str(d.value().tail, " * ",
+                                                                                         monostate())) {
+                                    if (OptionParserResult<i64> f = parse_i64(e.value().tail)) {
+                                        switch (f.value().data) {
+                                            case 0:
+                                                scale = arg_t::memory_t::scale_t::S0;
+                                                break;
+                                            case 1:
+                                                scale = arg_t::memory_t::scale_t::S1;
+                                                break;
+                                            case 2:
+                                                scale = arg_t::memory_t::scale_t::S2;
+                                                break;
+                                            case 4:
+                                                scale = arg_t::memory_t::scale_t::S4;
+                                                break;
+                                            case 8:
+                                                scale = arg_t::memory_t::scale_t::S8;
+                                                break;
+                                        }
+
+                                        b.value().tail = f.value().tail;
+                                    }
+                                }
+                            }
+                        }
+
+                        i32 disp = 0;
+                        if (OptionParserResult<monostate> c = consume_prefix_str(b.value().tail, " + ", monostate())) {
+                            if (OptionParserResult<i64> d = parse_i64(c.value().tail)) {
+                                disp = i32(d.value().data);
+                                b.value().tail = d.value().tail;
+                            }
+                        }
+
+                        if (OptionParserResult<monostate> c = consume_prefix_char(b.value().tail, ']', monostate())) {
+                            arg_t result = arg_t::mem(base, index, scale, disp);
+                            return make_option(ParserResult(c.value().tail, result));
+                        } else {
+                            return OptionParserResult<arg_t>();
+                        }
+                    } else {
+                        return OptionParserResult<arg_t>();
+                    }
+                } else {
+                    return OptionParserResult<arg_t>();
+                }
             });
 
     return result;
@@ -209,11 +283,13 @@ namespace assembly {
         }
 
         auto test() -> void {
-            string s = "mov DWORD eax, ecx\n";
+            string s = "mov DWORD eax, 100\n"
+                       "mov BYTE ah, [eax + ebx * 2 + 128]\n";
             auto mnemos = assembly::parse::parse(s);
 
             for (auto &mnemo : mnemos) {
                 mnemo.print();
+                cout << "\n";
             }
         }
     }
