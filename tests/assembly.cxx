@@ -122,14 +122,14 @@ namespace tests {
                                                   .width = mnemo_t::width_t::Dword,
                                                   .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Ebx),
                                                   .a2 = mnemo_t::arg_t::mem(mnemo_t::arg_t::reg_t::Rsi,
-                                                                            mnemo_t::arg_t::reg_t::Rcx,
+                                                                            mnemo_t::arg_t::reg_t::Undef,
                                                                             mnemo_t::arg_t::memory_t::scale_t::S0, 0),
                                           },
                                           {
                                                   .tag = mnemo_t::tag_t::Add,
                                                   .width = mnemo_t::width_t::Dword,
                                                   .a1 = mnemo_t::arg_t::mem(mnemo_t::arg_t::reg_t::Rsi,
-                                                                            mnemo_t::arg_t::reg_t::Rcx,
+                                                                            mnemo_t::arg_t::reg_t::Undef,
                                                                             mnemo_t::arg_t::memory_t::scale_t::S0, 0),
                                                   .a2 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Ebx),
                                           },
@@ -137,7 +137,7 @@ namespace tests {
                                                   .tag = mnemo_t::tag_t::Add,
                                                   .width = mnemo_t::width_t::Byte,
                                                   .a1 = mnemo_t::arg_t::mem(mnemo_t::arg_t::reg_t::Rsi,
-                                                                            mnemo_t::arg_t::reg_t::Rcx,
+                                                                            mnemo_t::arg_t::reg_t::Undef,
                                                                             mnemo_t::arg_t::memory_t::scale_t::S0, 0),
                                                   .a2 = mnemo_t::arg_t::imm(100),
                                           },
@@ -145,7 +145,7 @@ namespace tests {
                                                   .tag = mnemo_t::tag_t::Add,
                                                   .width = mnemo_t::width_t::Word,
                                                   .a1 = mnemo_t::arg_t::mem(mnemo_t::arg_t::reg_t::Rsi,
-                                                                            mnemo_t::arg_t::reg_t::Rcx,
+                                                                            mnemo_t::arg_t::reg_t::Undef,
                                                                             mnemo_t::arg_t::memory_t::scale_t::S0, 0),
                                                   .a2 = mnemo_t::arg_t::imm(10000),
                                           },
@@ -383,7 +383,7 @@ namespace tests {
                                 .width = mnemo_t::width_t::Qword,
                                 .a1 = mnemo_t::arg_t::mem(
                                         mnemo_t::arg_t::reg_t::Rbp,
-                                        mnemo_t::arg_t::reg_t::Rcx,
+                                        mnemo_t::arg_t::reg_t::Undef,
                                         mnemo_t::arg_t::memory_t::scale_t::S0,
                                         -8
                                 ),
@@ -400,7 +400,7 @@ namespace tests {
                                 .width = mnemo_t::width_t::Byte,
                                 .a1 = mnemo_t::arg_t::mem(
                                         mnemo_t::arg_t::reg_t::Rbp,
-                                        mnemo_t::arg_t::reg_t::Rcx,
+                                        mnemo_t::arg_t::reg_t::Undef,
                                         mnemo_t::arg_t::memory_t::scale_t::S0,
                                         -8
                                 ),
@@ -412,7 +412,7 @@ namespace tests {
                                 .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rax),
                                 .a2 = mnemo_t::arg_t::mem(
                                         mnemo_t::arg_t::reg_t::Rbp,
-                                        mnemo_t::arg_t::reg_t::Rcx,
+                                        mnemo_t::arg_t::reg_t::Undef,
                                         mnemo_t::arg_t::memory_t::scale_t::S0,
                                         -8
                                 ),
@@ -449,7 +449,7 @@ namespace tests {
                                 .width = mnemo_t::width_t::Qword,
                                 .a1 = mnemo_t::arg_t::mem(
                                         mnemo_t::arg_t::reg_t::Rsp,
-                                        mnemo_t::arg_t::reg_t::Rcx,
+                                        mnemo_t::arg_t::reg_t::Undef,
                                         mnemo_t::arg_t::memory_t::scale_t::S0,
                                         -8
                                 ),
@@ -466,7 +466,7 @@ namespace tests {
                                 .width = mnemo_t::width_t::Byte,
                                 .a1 = mnemo_t::arg_t::mem(
                                         mnemo_t::arg_t::reg_t::Rsp,
-                                        mnemo_t::arg_t::reg_t::Rcx,
+                                        mnemo_t::arg_t::reg_t::Undef,
                                         mnemo_t::arg_t::memory_t::scale_t::S0,
                                         -8
                                 ),
@@ -478,7 +478,7 @@ namespace tests {
                                 .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rax),
                                 .a2 = mnemo_t::arg_t::mem(
                                         mnemo_t::arg_t::reg_t::Rsp,
-                                        mnemo_t::arg_t::reg_t::Rcx,
+                                        mnemo_t::arg_t::reg_t::Undef,
                                         mnemo_t::arg_t::memory_t::scale_t::S0,
                                         -8
                                 ),
@@ -528,7 +528,7 @@ namespace tests {
                                 .width = mnemo_t::width_t::Qword,
                                 .a1 = mnemo_t::arg_t::mem(
                                         mnemo_t::arg_t::reg_t::Rsp,
-                                        mnemo_t::arg_t::reg_t::Rcx,
+                                        mnemo_t::arg_t::reg_t::Undef,
                                         mnemo_t::arg_t::memory_t::scale_t::S0,
                                         -8
                                 ),
@@ -539,7 +539,7 @@ namespace tests {
                                 .width = mnemo_t::width_t::Byte,
                                 .a1 = mnemo_t::arg_t::mem(
                                         mnemo_t::arg_t::reg_t::Rsp,
-                                        mnemo_t::arg_t::reg_t::Rcx,
+                                        mnemo_t::arg_t::reg_t::Undef,
                                         mnemo_t::arg_t::memory_t::scale_t::S0,
                                         -8
                                 ),
@@ -551,7 +551,7 @@ namespace tests {
                                 .a1 = mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t::Rax),
                                 .a2 = mnemo_t::arg_t::mem(
                                         mnemo_t::arg_t::reg_t::Rsp,
-                                        mnemo_t::arg_t::reg_t::Rcx,
+                                        mnemo_t::arg_t::reg_t::Undef,
                                         mnemo_t::arg_t::memory_t::scale_t::S0,
                                         -8
                                 ),

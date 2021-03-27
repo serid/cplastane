@@ -148,7 +148,9 @@ namespace assembly {
     // Put an "address-size override" prefix if address width = dword
     // In 64 bit mode switches address width from 64 bits to 32 bits
     static auto push_ASOR_if_dword(vector<u8> &out, const mnemo_t::arg_t::memory_t &memory_field) -> void {
-        if (register_width(memory_field.index) != register_width(memory_field.base)) {
+        // If index register is defined and its width does not match that of base, throw and error
+        if (memory_field.index != mnemo_t::arg_t::reg_t::Undef &&
+            register_width(memory_field.index) != register_width(memory_field.base)) {
             throw logic_error(
                     "Assertion failed: index and base fields have differing widths @ push_ASOR_if_dword");
         }
@@ -657,6 +659,10 @@ namespace assembly {
 
     mnemo_t::arg_t mnemo_t::arg_t::mem(mnemo_t::arg_t::reg_t base, mnemo_t::arg_t::reg_t index,
                                        mnemo_t::arg_t::memory_t::scale_t scale, i32 disp) {
+        // If scale is S0, the index register should be Undef
+        if (scale == mnemo_t::arg_t::memory_t::scale_t::S0 && index != mnemo_t::arg_t::reg_t::Undef)
+            throw logic_error("if scale is S0, the index register should be Undef");
+
         arg_t o{};
         o.tag = tag_t::Memory;
         o.data.memory = {

@@ -47,7 +47,7 @@ namespace assembly {
                 reg_t index;
                 enum class scale_t {
                     Undef,
-                    S0,
+                    S0, // If scale is S0, the index register should be Undef
                     S1,
                     S2,
                     S4,
