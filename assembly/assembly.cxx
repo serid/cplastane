@@ -835,17 +835,21 @@ namespace assembly {
                 throw logic_error("unimplemented mnemo.tag");
         }
 
-        std::cout << ' ';
+        if (this->get_arity() >= 1) {
+            std::cout << ' ';
 
-        print_width(this->width);
+            print_width(this->width);
 
-        std::cout << ' ';
+            std::cout << ' ';
 
-        this->a1.print();
+            this->a1.print();
 
-        std::cout << ' ';
+            if (this->get_arity() >= 2) {
+                std::cout << ' ';
 
-        this->a2.print();
+                this->a2.print();
+            }
+        }
 
         cout << ")";
     }
@@ -883,6 +887,22 @@ namespace assembly {
         }
         if (this->a2.tag == mnemo_t::arg_t::tag_t::Register && register_width(this->a2.data.reg) != this->width) {
             throw logic_error("arg2 register width does not match instruction width");
+        }
+    }
+
+    // Returns arity of a mnemo (how many arguments it takes)
+    auto mnemo_t::get_arity() const -> u8 {
+        switch (this->tag) {
+            case tag_t::Mov:
+            case tag_t::Add:
+                return 2;
+            case tag_t::Push:
+            case tag_t::Pop:
+                return 1;
+            case tag_t::Ret:
+                return 0;
+            default:
+                throw logic_error("unhandled mnemo.tag @ get_arity");
         }
     }
 }

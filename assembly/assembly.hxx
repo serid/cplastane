@@ -103,6 +103,8 @@ namespace assembly {
 
         auto check_validity() const -> void;
 
+        auto get_arity() const -> u8;
+
         auto static print_width(width_t width) -> void;
     };
 
