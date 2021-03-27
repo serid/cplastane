@@ -14,12 +14,62 @@ using arg_t = mnemo_t::arg_t;
 using reg_t = arg_t::reg_t;
 
 static auto parse_register(strive tail) -> OptionParserResult<reg_t> {
-    return consume_prefix_str(tail, "eax", reg_t::Eax).choice([=]() {
+    return OptionParserResult<reg_t>().choice([=]() {
+        return consume_prefix_str(tail, "al", reg_t::Al);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "bl", reg_t::Bl);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "cl", reg_t::Cl);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "dl", reg_t::Dl);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "ah", reg_t::Ah);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "bh", reg_t::Bh);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "ch", reg_t::Ch);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "dh", reg_t::Dh);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "ax", reg_t::Ax);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "bx", reg_t::Bx);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "cx", reg_t::Cx);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "dx", reg_t::Dx);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "sp", reg_t::Sp);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "bp", reg_t::Bp);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "si", reg_t::Si);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "di", reg_t::Di);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "eax", reg_t::Eax);
+    }).choice([=]() {
         return consume_prefix_str(tail, "ebx", reg_t::Ebx);
     }).choice([=]() {
         return consume_prefix_str(tail, "ecx", reg_t::Ecx);
     }).choice([=]() {
         return consume_prefix_str(tail, "edx", reg_t::Edx);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "rax", reg_t::Rax);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "rbx", reg_t::Rbx);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "rcx", reg_t::Rcx);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "rdx", reg_t::Rdx);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "rsp", reg_t::Rsp);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "rbp", reg_t::Rbp);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "rsi", reg_t::Rsi);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "rdi", reg_t::Rdi);
     });
 }
 
