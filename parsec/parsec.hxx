@@ -12,48 +12,52 @@
 using namespace std;
 
 namespace parsec {
-    template<typename T>
-    using infallible_parser_result = tuple<string_view, T>;
+    using strive = string_view;
 
     template<typename T>
-    using parser_result = Option<tuple<string_view, T>>;
+    struct ParserResult {
+        strive tail;
+        T data;
 
-    template<typename T, typename A>
-    using parser_type = function<parser_result<T>(string_view, A)>;
+        ParserResult(strive tail, T data) : tail(tail), data(data) {}
+    };
 
-    auto skip_while_char(string_view tail,
-                         function<bool(char)> predicate) -> infallible_parser_result<monostate>;
+    template<typename T>
+    using OptionParserResult = Option<ParserResult<T>>;
+
+    auto skip_while_char(strive tail,
+                         function<bool(char)> predicate) -> ParserResult<monostate>;
 
     auto
-    scan_while_char(string_view tail, function<bool(char)> predicate) -> infallible_parser_result<string>;
+    scan_while_char(strive tail, function<bool(char)> predicate) -> ParserResult<string>;
 
-    auto scan_char(string_view tail) -> parser_result<char>;
+    auto scan_char(strive tail) -> OptionParserResult<char>;
 
-    auto parse_i64(string_view tail) -> parser_result<i64>;
+    auto parse_i64(strive tail) -> OptionParserResult<i64>;
 
     template<typename T>
-    auto consume_prefix_char(string_view tail, char prefix, T on_success) -> parser_result<T> {
-        if (parser_result<char> result1 = scan_char(tail)) {
-            tail = get<0>(*result1);
-            char c = get<1>(*result1);
+    auto consume_prefix_char(strive tail, char prefix, T on_success) -> OptionParserResult<T> {
+        if (OptionParserResult<char> result1 = scan_char(tail)) {
+            tail = result1.value().tail;
+            char c = result1.value().data;
             if (c == prefix) {
-                return make_option(make_tuple(tail, on_success));
+                return make_option(ParserResult(tail, on_success));
             } else {
-                return parser_result<T>();
+                return OptionParserResult<T>();
             }
         } else {
-            return parser_result<T>();
+            return OptionParserResult<T>();
         }
     }
 
     template<typename T>
-    auto consume_prefix_str(string_view tail, string_view prefix, T on_success) -> parser_result<T> {
+    auto consume_prefix_str(strive tail, strive prefix, T on_success) -> OptionParserResult<T> {
         if (tail.size() < prefix.size())
-            return parser_result<T>();
+            return OptionParserResult<T>();
         for (size_t i = 0; i < prefix.size(); ++i) {
             if (tail[i] != prefix[i])
-                return parser_result<T>();
+                return OptionParserResult<T>();
         }
-        return make_option(make_tuple(tail.substr(prefix.size()), on_success));
+        return make_option(ParserResult(tail.substr(prefix.size()), on_success));
     }
 }

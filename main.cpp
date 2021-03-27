@@ -7,7 +7,7 @@
 int main() {
 //    syntax::parse::test_parser();
 //    tests::test_assembly();
-//    parsec::tests::test();
+    parsec::tests::test();
 
     assembly::parse::test();
 }

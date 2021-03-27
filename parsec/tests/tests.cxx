@@ -25,7 +25,7 @@ namespace parsec {
         }
 
         template<typename T>
-        using owning_parser_result = Option<tuple<string, T>>;
+        using owning_OptionParserResult = Option<tuple<string, T>>;
 
         auto test() -> void {
             test::TestGroup tests = {
@@ -35,12 +35,12 @@ namespace parsec {
                             "bbbccc",
                             [](monostate) -> string {
                                 string s("aaabbbccc");
-                                string_view tail(s);
-                                infallible_parser_result <monostate> res = skip_while_char(tail,
-                                                                                                [](char c) -> bool {
-                                                                                                    return c == 'a';
-                                                                                                });
-                                tail = get<0>(res);
+                                strive tail(s);
+                                ParserResult <monostate> res = skip_while_char(tail,
+                                                                               [](char c) -> bool {
+                                                                                   return c == 'a';
+                                                                               });
+                                tail = res.tail;
                                 return string(tail);
                             },
                             print_string
@@ -51,13 +51,13 @@ namespace parsec {
                             make_tuple("bbbccc", "aaa"),
                             [](monostate) -> tuple<string, string> {
                                 string s("aaabbbccc");
-                                string_view tail(s);
-                                infallible_parser_result <string> res = scan_while_char(tail,
-                                                                                        [](char c) -> bool {
-                                                                                            return c == 'a';
-                                                                                        });
-                                tail = get<0>(res);
-                                string scanned = get<1>(res);
+                                strive tail(s);
+                                ParserResult <string> res = scan_while_char(tail,
+                                                                            [](char c) -> bool {
+                                                                                return c == 'a';
+                                                                            });
+                                tail = res.tail;
+                                string scanned = res.data;
 
                                 return make_tuple(string(tail), scanned);
                             },
@@ -67,10 +67,10 @@ namespace parsec {
                             "scan_char",
                             []() -> bool {
                                 string s("aaabbbccc");
-                                string_view tail(s);
-                                parser_result<char> res = scan_char(tail);
-                                tail = string(get<0>(*res));
-                                char res_char = get<1>(*res);
+                                strive tail(s);
+                                OptionParserResult<char> res = scan_char(tail);
+                                tail = string(res.value().tail);
+                                char res_char = res.value().data;
                                 return tail == "aabbbccc" && res_char == 'a';
                             }
                     ),
@@ -78,8 +78,8 @@ namespace parsec {
                             "scan_char-fail",
                             []() -> bool {
                                 string s("");
-                                string_view tail(s);
-                                parser_result<char> res = scan_char(tail);
+                                strive tail(s);
+                                OptionParserResult<char> res = scan_char(tail);
                                 return !res.has_value();
                             }
                     ),
@@ -87,10 +87,10 @@ namespace parsec {
                             "i64",
                             []() -> bool {
                                 string s("-100aaa");
-                                string_view tail(s);
-                                if (parser_result < i64 > res = parse_i64(tail)) {
-                                    tail = get<0>(*res);
-                                    int scanned = get<1>(*res);
+                                strive tail(s);
+                                if (OptionParserResult < i64 > res = parse_i64(tail)) {
+                                    tail = res.value().tail;
+                                    int scanned = res.value().data;
                                     return tail == "aaa" && scanned == -100;
                                 }
                                 return false;
@@ -100,8 +100,8 @@ namespace parsec {
                             "i64-fail",
                             []() -> bool {
                                 string s("aaa");
-                                string_view tail(s);
-                                parser_result <i64> res = parse_i64(tail);
+                                strive tail(s);
+                                OptionParserResult <i64> res = parse_i64(tail);
                                 return !res.has_value();
                             }
                     ),
@@ -109,10 +109,10 @@ namespace parsec {
                             "consume_prefix_char",
                             []() -> bool {
                                 string s("aabb");
-                                string_view tail(s);
-                                if (parser_result < int > res = consume_prefix_char(tail, 'a', 23)) {
-                                    tail = get<0>(*res);
-                                    int success = get<1>(*res);
+                                strive tail(s);
+                                if (OptionParserResult < int > res = consume_prefix_char(tail, 'a', 23)) {
+                                    tail = res.value().tail;
+                                    int success = res.value().data;
                                     return tail == "abb" && success == 23;
                                 }
                                 return false;
@@ -122,8 +122,8 @@ namespace parsec {
                             "consume_prefix_char-fail",
                             []() -> bool {
                                 string s("bb");
-                                string_view tail(s);
-                                parser_result<int> res = consume_prefix_char(tail, 'a', 23);
+                                strive tail(s);
+                                OptionParserResult<int> res = consume_prefix_char(tail, 'a', 23);
                                 return !res.has_value();
                             }
                     ),
@@ -131,8 +131,8 @@ namespace parsec {
                             "consume_prefix_char-fail-empty",
                             []() -> bool {
                                 string s("bb");
-                                string_view tail(s);
-                                parser_result<int> res = consume_prefix_char(tail, 'a', 23);
+                                strive tail(s);
+                                OptionParserResult<int> res = consume_prefix_char(tail, 'a', 23);
                                 return !res.has_value();
                             }
                     ),
@@ -140,10 +140,10 @@ namespace parsec {
                             "consume_prefix_str",
                             []() -> bool {
                                 string s("123bb");
-                                string_view tail(s);
-                                if (parser_result < int > res = consume_prefix_str(tail, "123", 23)) {
-                                    tail = get<0>(*res);
-                                    int success = get<1>(*res);
+                                strive tail(s);
+                                if (OptionParserResult < int > res = consume_prefix_str(tail, "123", 23)) {
+                                    tail = res.value().tail;
+                                    int success = res.value().data;
                                     return tail == "bb" && success == 23;
                                 }
                                 return false;
@@ -153,8 +153,8 @@ namespace parsec {
                             "consume_prefix_str-fail",
                             []() -> bool {
                                 string s("456bb");
-                                string_view tail(s);
-                                parser_result<int> res = consume_prefix_str(tail, "123", 23);
+                                strive tail(s);
+                                OptionParserResult<int> res = consume_prefix_str(tail, "123", 23);
                                 return !res.has_value();
                             }
                     ),
@@ -162,8 +162,8 @@ namespace parsec {
                             "consume_prefix_str-fail-empty",
                             []() -> bool {
                                 string s("");
-                                string_view tail(s);
-                                parser_result<int> res = consume_prefix_str(tail, "123", 23);
+                                strive tail(s);
+                                OptionParserResult<int> res = consume_prefix_str(tail, "123", 23);
                                 return !res.has_value();
                             }
                     ),

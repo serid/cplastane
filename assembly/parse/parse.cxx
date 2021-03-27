@@ -13,118 +13,115 @@ using namespace parsec;
 using arg_t = mnemo_t::arg_t;
 using reg_t = arg_t::reg_t;
 
-static auto parse_register(string_view tail) -> parser_result<reg_t> {
-    return consume_prefix_str(tail, "eax", reg_t::Eax).choice([=]() -> parser_result<reg_t> {
+static auto parse_register(strive tail) -> OptionParserResult<reg_t> {
+    return consume_prefix_str(tail, "eax", reg_t::Eax).choice([=]() {
         return consume_prefix_str(tail, "ebx", reg_t::Ebx);
-    }).choice([=]() -> parser_result<reg_t> {
+    }).choice([=]() {
         return consume_prefix_str(tail, "ecx", reg_t::Ecx);
-    }).choice([=]() -> parser_result<reg_t> {
+    }).choice([=]() {
         return consume_prefix_str(tail, "edx", reg_t::Edx);
     });
 }
 
-static auto parse_mnemo_name(string_view tail) -> parser_result<mnemo_t::tag_t> {
-    return consume_prefix_str(tail, "mov", mnemo_t::tag_t::Mov).choice([=]() -> parser_result<mnemo_t::tag_t> {
+static auto parse_mnemo_name(strive tail) -> OptionParserResult<mnemo_t::tag_t> {
+    return consume_prefix_str(tail, "mov", mnemo_t::tag_t::Mov).choice([=]() {
         return consume_prefix_str(tail, "add", mnemo_t::tag_t::Add);
-    }).choice([=]() -> parser_result<mnemo_t::tag_t> {
+    }).choice([=]() {
         return consume_prefix_str(tail, "push", mnemo_t::tag_t::Push);
-    }).choice([=]() -> parser_result<mnemo_t::tag_t> {
+    }).choice([=]() {
         return consume_prefix_str(tail, "pop", mnemo_t::tag_t::Pop);
-    }).choice([=]() -> parser_result<mnemo_t::tag_t> {
+    }).choice([=]() {
         return consume_prefix_str(tail, "ret", mnemo_t::tag_t::Ret);
     });
 }
 
-static auto parse_mnemo_width(string_view tail) -> parser_result<mnemo_t::width_t> {
-    return consume_prefix_str(tail, "BYTE", mnemo_t::width_t::Byte).choice([=]() -> parser_result<mnemo_t::width_t> {
+static auto parse_mnemo_width(strive tail) -> OptionParserResult<mnemo_t::width_t> {
+    return consume_prefix_str(tail, "BYTE", mnemo_t::width_t::Byte).choice([=]() {
         return consume_prefix_str(tail, "WORD", mnemo_t::width_t::Word);
-    }).choice([=]() -> parser_result<mnemo_t::width_t> {
+    }).choice([=]() {
         return consume_prefix_str(tail, "DWORD", mnemo_t::width_t::Dword);
-    }).choice([=]() -> parser_result<mnemo_t::width_t> {
+    }).choice([=]() {
         return consume_prefix_str(tail, "QWORD", mnemo_t::width_t::Qword);
-    }).choice([=]() -> parser_result<mnemo_t::width_t> {
+    }).choice([=]() {
         return consume_prefix_str(tail, "NotSet", mnemo_t::width_t::NotSet);
     });
 }
 
-static auto parse_arg(string_view tail) -> parser_result<arg_t> {
+static auto parse_arg(strive tail) -> OptionParserResult<arg_t> {
     // Parses an arg from text assembly like
     // 100
     // eax
     // [eax]
 
-    parser_result<arg_t> result = parse_i64(tail).bind<tuple<string_view, arg_t>>(
-            [](tuple<string_view, i64> result1) -> parser_result<arg_t> {
-                string_view tail2 = get<0>(result1);
+    OptionParserResult<arg_t> result =
+            parse_i64(tail).bind<ParserResult<arg_t>>([](ParserResult<i64> result1) {
+                strive tail2 = result1.tail;
                 arg_t result = {
                         .tag = arg_t::tag_t::Immediate,
-                        .data = {.imm = get<1>(result1)}
+                        .data = {.imm = result1.data}
                 };
-                return make_option(make_tuple(tail2, result));
-            }).choice([tail]() -> parser_result<arg_t> {
-        return parse_register(tail).bind<tuple<string_view, arg_t>>(
-                [](tuple<string_view, reg_t> result1) -> parser_result<arg_t> {
-                    string_view tail2 = get<0>(result1);
+                return make_option(ParserResult(tail2, result));
+            }).choice([tail]() {
+                return parse_register(tail).bind<ParserResult<arg_t>>([](ParserResult<reg_t> result1) {
+                    strive tail2 = result1.tail;
                     arg_t result = {
                             .tag = arg_t::tag_t::Register,
-                            .data = {.reg = get<1>(result1)}
+                            .data = {.reg = result1.data}
                     };
-                    return make_option(make_tuple(tail2, result));
+                    return make_option(ParserResult(tail2, result));
                 });
-    });
+            });
 
     return result;
 }
 
-static auto parse_line(string_view tail) -> parser_result<mnemo_t> {
+static auto parse_line(strive tail) -> OptionParserResult<mnemo_t> {
     // Parses a line from text assembly like
     // mov eax, 100
 
-    parser_result<mnemo_t> result = parse_mnemo_name(tail).bind<tuple<string_view, mnemo_t>>(
-            [](tuple<string_view, mnemo_t::tag_t> result1) -> parser_result<mnemo_t> {
-                string_view tail1 = get<0>(result1);
-                mnemo_t::tag_t tag = get<1>(result1);
+    OptionParserResult<mnemo_t> result = parse_mnemo_name(tail).bind<ParserResult<mnemo_t>>(
+            [](ParserResult<mnemo_t::tag_t> result1) {
+                strive tail1 = result1.tail;
+                mnemo_t::tag_t tag = result1.data;
 
                 // Skip spaces
-                tuple<string_view, monostate> result2 = skip_while_char(tail1, [](char c) { return c == ' '; });
-                string_view tail2 = get<0>(result2);
+                ParserResult<monostate> result2 = skip_while_char(tail1, [](char c) { return c == ' '; });
+                strive tail2 = result2.tail;
 
-                return parse_mnemo_width(tail2).bind<tuple<string_view, mnemo_t>>(
-                        [=](tuple<string_view, mnemo_t::width_t> result3) -> parser_result<mnemo_t> {
-                            string_view tail3 = get<0>(result3);
-                            mnemo_t::width_t width = get<1>(result3);
+                return parse_mnemo_width(tail2).bind<ParserResult<mnemo_t>>(
+                        [=](ParserResult<mnemo_t::width_t> result3) {
+                            strive tail3 = result3.tail;
+                            mnemo_t::width_t width = result3.data;
 
                             // Skip spaces
-                            tuple<string_view, monostate> result4 = skip_while_char(tail3,
-                                                                                    [](char c) { return c == ' '; });
-                            string_view tail4 = get<0>(result4);
+                            ParserResult<monostate> result4 = skip_while_char(tail3, [](char c) { return c == ' '; });
+                            strive tail4 = result4.tail;
 
-                            return parse_arg(tail4).bind<tuple<string_view, mnemo_t>>(
-                                    [=](tuple<string_view, arg_t> result5) -> parser_result<mnemo_t> {
-                                        string_view tail5 = get<0>(result5);
-                                        arg_t arg1 = get<1>(result5);
+                            return parse_arg(tail4).bind<ParserResult<mnemo_t>>([=](ParserResult<arg_t> result5) {
+                                strive tail5 = result5.tail;
+                                arg_t arg1 = result5.data;
 
-                                        return consume_prefix_str(tail5, ", ",
-                                                                  monostate()).bind<tuple<string_view, mnemo_t>>(
-                                                [=](tuple<string_view, monostate> result6) -> parser_result<mnemo_t> {
-                                                    string_view tail6 = get<0>(result6);
+                                return consume_prefix_str(tail5, ", ",
+                                                          monostate()).bind<ParserResult<mnemo_t>>(
+                                        [=](ParserResult<monostate> result6) {
+                                            strive tail6 = result6.tail;
 
-                                                    return parse_arg(tail6).bind<tuple<string_view, mnemo_t>>(
-                                                            [=](tuple<string_view, arg_t> result7) -> parser_result<mnemo_t> {
-                                                                string_view tail7 = get<0>(result7);
-                                                                arg_t arg2 = get<1>(result7);
+                                            return parse_arg(tail6).bind<ParserResult<mnemo_t>>(
+                                                    [=](ParserResult<arg_t> result7) {
+                                                        strive tail7 = result7.tail;
+                                                        arg_t arg2 = result7.data;
 
-                                                                mnemo_t mnemo = {
-                                                                        .tag = tag,
-                                                                        .width = width,
-                                                                        .a1 = arg1,
-                                                                        .a2 = arg2,
-                                                                };
+                                                        mnemo_t mnemo = {
+                                                                .tag = tag,
+                                                                .width = width,
+                                                                .a1 = arg1,
+                                                                .a2 = arg2,
+                                                        };
 
-                                                                return make_option(make_tuple(tail7, mnemo));
-                                                            });
-                                                });
-                                    });
+                                                        return make_option(ParserResult(tail7, mnemo));
+                                                    });
+                                        });
+                            });
                         });
             });
 
@@ -133,29 +130,29 @@ static auto parse_line(string_view tail) -> parser_result<mnemo_t> {
 
 namespace assembly {
     namespace parse {
-        auto parse(string_view tail) -> vector<mnemo_t> {
+        auto parse(strive tail) -> vector<mnemo_t> {
             // Parses multiline assembly text
 
             vector<mnemo_t> result{};
 
             for (;;) {
-                if (parser_result<mnemo_t> result1 = parse_line(tail)) {
+                if (OptionParserResult<mnemo_t> result1 = parse_line(tail)) {
                     // If result is available, continue iteration
-                    tail = get<0>(*result1);
-                    result.push_back(get<1>(*result1));
+                    tail = result1.value().tail;
+                    result.push_back(result1.value().data);
 
                     // Consume a newline
-                    if (parser_result<monostate> result2 = consume_prefix_char(tail, '\n', monostate())) {
+                    if (OptionParserResult<monostate> result2 = consume_prefix_char(tail, '\n', monostate())) {
                         // If result is available, continue iteration
-                        tail = get<0>(*result2);
+                        tail = result2.value().tail;
                     } else {
                         // Newline not found
                         throw logic_error("Uh oh");
-                    };
+                    }
                 } else {
                     // Else break
                     break;
-                };
+                }
             }
 
             return result;
