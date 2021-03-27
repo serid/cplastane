@@ -203,53 +203,57 @@ static auto parse_line(strive tail) -> OptionParserResult<mnemo_t> {
     // Parses a line from text assembly like
     // mov eax, 100
 
-    OptionParserResult<mnemo_t> result = parse_mnemo_name(tail).bind<ParserResult<mnemo_t>>(
-            [](ParserResult<mnemo_t::tag_t> result1) {
-                strive tail1 = result1.tail;
-                mnemo_t::tag_t tag = result1.data;
+    // Parse mnemo tag
+    if (OptionParserResult<mnemo_t::tag_t> a = parse_mnemo_name(tail)) {
+        mnemo_t::tag_t tag = a.value().data;
 
-                // Skip spaces
-                ParserResult<monostate> result2 = skip_while_char(tail1, [](char c) { return c == ' '; });
-                strive tail2 = result2.tail;
+        // Skip spaces
+        ParserResult<monostate> b = skip_while_char(a.value().tail, [](char c) { return c == ' '; });
 
-                return parse_mnemo_width(tail2).bind<ParserResult<mnemo_t>>(
-                        [=](ParserResult<mnemo_t::width_t> result3) {
-                            strive tail3 = result3.tail;
-                            mnemo_t::width_t width = result3.data;
+        // Parse mnemo width
+        if (OptionParserResult<mnemo_t::width_t> c = parse_mnemo_width(b.tail)) {
+            mnemo_t::width_t width = c.value().data;
 
-                            // Skip spaces
-                            ParserResult<monostate> result4 = skip_while_char(tail3, [](char c) { return c == ' '; });
-                            strive tail4 = result4.tail;
+            // Skip spaces
+            ParserResult<monostate> d = skip_while_char(c.value().tail, [](char c) { return c == ' '; });
 
-                            return parse_arg(tail4).bind<ParserResult<mnemo_t>>([=](ParserResult<arg_t> result5) {
-                                strive tail5 = result5.tail;
-                                arg_t arg1 = result5.data;
+            arg_t arg1{};
+            // Maybe parse arg1
+            if (OptionParserResult<mnemo_t::arg_t> e = parse_arg(d.tail)) {
+                arg1 = e.value().data;
 
-                                return consume_prefix_str(tail5, ", ",
-                                                          monostate()).bind<ParserResult<mnemo_t>>(
-                                        [=](ParserResult<monostate> result6) {
-                                            strive tail6 = result6.tail;
+                // Skip ", "
+                if (OptionParserResult<monostate> f = consume_prefix_str(e.value().tail, ", ", monostate())) {
+                    arg_t arg2{};
+                    // Maybe parse arg2
+                    if (OptionParserResult<mnemo_t::arg_t> g = parse_arg(f.value().tail)) {
+                        arg2 = g.value().data;
 
-                                            return parse_arg(tail6).bind<ParserResult<mnemo_t>>(
-                                                    [=](ParserResult<arg_t> result7) {
-                                                        strive tail7 = result7.tail;
-                                                        arg_t arg2 = result7.data;
+                        // todo: consume \n
 
-                                                        mnemo_t mnemo = {
-                                                                .tag = tag,
-                                                                .width = width,
-                                                                .a1 = arg1,
-                                                                .a2 = arg2,
-                                                        };
+                        mnemo_t mnemo = {
+                                .tag = tag,
+                                .width = width,
+                                .a1 = arg1,
+                                .a2 = arg2,
+                        };
 
-                                                        return make_option(ParserResult(tail7, mnemo));
-                                                    });
-                                        });
-                            });
-                        });
-            });
-
-    return result;
+                        return make_option(ParserResult(g.value().tail, mnemo));
+                    } else {
+                        return OptionParserResult<mnemo_t>();
+                    }
+                } else {
+                    return OptionParserResult<mnemo_t>();
+                }
+            } else {
+                return OptionParserResult<mnemo_t>();
+            }
+        } else {
+            return OptionParserResult<mnemo_t>();
+        }
+    } else {
+        return OptionParserResult<mnemo_t>();
+    }
 }
 
 namespace assembly {
