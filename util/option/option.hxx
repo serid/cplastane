@@ -10,10 +10,11 @@ class Option : public optional<T> {
     typedef T value_type;
 
 public:
-    auto map(function<T(T)> f) -> Option<T> {
+    template<class U>
+    auto map(function<U(T)> f) -> Option<U> {
         if (this->has_value())
             return Option(f(**this));
-        return Option<T>();
+        return Option<U>();
     }
 
     // Haskell Monad.>>=, Rust Option::and_then()
