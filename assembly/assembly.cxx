@@ -674,7 +674,49 @@ namespace assembly {
                 print_reg(this->data.reg);
                 break;
             case tag_t::Memory:
-                throw logic_error("todo");
+                cout << "[";
+
+                print_reg(this->data.memory.base);
+
+                // Print index with scale if there is one
+                if (this->data.memory.scale != memory_t::scale_t::S0) {
+                    cout << " + ";
+
+                    print_reg(this->data.memory.index);
+
+                    // Print scale if it is not S1
+                    if (this->data.memory.scale != memory_t::scale_t::S1) {
+                        cout << " * ";
+
+                        switch (this->data.memory.scale) {
+                            case memory_t::scale_t::S1:
+                                cout << "1";
+                                break;
+                            case memory_t::scale_t::S2:
+                                cout << "2";
+                                break;
+                            case memory_t::scale_t::S4:
+                                cout << "4";
+                                break;
+                            case memory_t::scale_t::S8:
+                                cout << "8";
+                                break;
+                            default:
+                                throw logic_error("unreachable");
+                        }
+                    }
+                }
+
+                // Print disp if it is not zero
+                if (this->data.memory.disp != 0) {
+                    if (this->data.memory.disp > 0)
+                        cout << " + ";
+                    else
+                        cout << " - ";
+                    cout << abs(this->data.memory.disp);
+                }
+                cout << "]";
+                break;
             default:
                 throw logic_error("unreachable");
         }
