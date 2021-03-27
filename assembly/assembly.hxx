@@ -101,6 +101,8 @@ namespace assembly {
 
         auto print() const -> void;
 
+        auto check_validity() const -> void;
+
         auto static print_width(width_t width) -> void;
     };
 

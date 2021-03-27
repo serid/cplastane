@@ -598,16 +598,7 @@ namespace assembly {
     }
 
     auto assemble_mnemo(vector<u8> &out, const mnemo_t &mnemo) -> void {
-        if (mnemo.width != mnemo_t::width_t::Byte && mnemo.width != mnemo_t::width_t::Word &&
-            mnemo.width != mnemo_t::width_t::Dword && mnemo.width != mnemo_t::width_t::Qword &&
-            mnemo.width != mnemo_t::width_t::NotSet)
-            throw logic_error("Unsupported width! assemble_mnemo");
-        if (mnemo.a1.tag == mnemo_t::arg_t::tag_t::Register && register_width(mnemo.a1.data.reg) != mnemo.width) {
-            throw logic_error("arg1 register width does not match instruction width!");
-        }
-        if (mnemo.a2.tag == mnemo_t::arg_t::tag_t::Register && register_width(mnemo.a2.data.reg) != mnemo.width) {
-            throw logic_error("arg2 register width does not match instruction width!");
-        }
+        mnemo.check_validity();
 
         switch (mnemo.tag) {
             case mnemo_t::tag_t::Mov: {
@@ -836,6 +827,20 @@ namespace assembly {
                 break;
             default:
                 throw logic_error("unimplemented width_t. print_width");
+        }
+    }
+
+    // Perform basic validity checks for a mnemonic
+    auto mnemo_t::check_validity() const -> void {
+        if (this->tag == mnemo_t::tag_t::Undef)
+            throw logic_error("mnemo has Undef tag. assemble_mnemo");
+        if (this->width == mnemo_t::width_t::Undef)
+            throw logic_error("mnemo has Undef width. assemble_mnemo");
+        if (this->a1.tag == mnemo_t::arg_t::tag_t::Register && register_width(this->a1.data.reg) != this->width) {
+            throw logic_error("arg1 register width does not match instruction width");
+        }
+        if (this->a2.tag == mnemo_t::arg_t::tag_t::Register && register_width(this->a2.data.reg) != this->width) {
+            throw logic_error("arg2 register width does not match instruction width");
         }
     }
 }
