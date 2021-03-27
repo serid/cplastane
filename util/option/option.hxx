@@ -7,8 +7,6 @@ using namespace std;
 
 template<typename T>
 class Option : public optional<T> {
-    typedef T value_type;
-
 public:
     template<class U>
     auto map(function<U(T)> f) -> Option<U> {

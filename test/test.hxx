@@ -7,6 +7,7 @@
 #include "../int.hxx"
 #include "../strvec.hxx"
 
+#include <utility>
 #include <variant>
 
 using namespace std;
@@ -14,9 +15,9 @@ using namespace std;
 namespace test {
     class TestBase {
     public:
-        virtual auto run() const & -> bool = 0;
+        [[nodiscard]] virtual auto run() const & -> bool = 0;
 
-        virtual ~TestBase() {};
+        virtual ~TestBase() = default;
     };
 
     template<typename Input, typename Output>
@@ -35,9 +36,9 @@ namespace test {
     public:
         Test(string &&name, Input &&input, Output &&expected_output, process_f process, output_printer_f output_printer)
                 : name(move(name)), input(move(input)), expected_output(move(expected_output)),
-                  process(process), output_printer(output_printer) {}
+                  process(move(process)), output_printer(move(output_printer)) {}
 
-        virtual auto run() const & -> bool override {
+        [[nodiscard]] auto run() const & -> bool override {
             cout << ">> Test \"" << this->name << "\".\n";
 
             Output actual_output = this->process(this->input);
@@ -70,11 +71,11 @@ namespace test {
         InnerTest embed;
 
     public:
-        virtual auto run() const & -> bool override {
+        [[nodiscard]] auto run() const & -> bool override {
             return embed.run();
         }
 
-        BoolTest(string &&name, function<bool()> process) : embed(move(name), monostate(), true,
+        BoolTest(string &&name, const function<bool()>& process) : embed(move(name), monostate(), true,
                                                                        [=](monostate) -> bool { return process(); },
                                                                        print_bool) {}
     };

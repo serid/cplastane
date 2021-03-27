@@ -1,8 +1,6 @@
 #include "assembly.hxx"
 
 #include <iostream>
-#include <stdexcept>
-#include <limits>
 
 using namespace std;
 
@@ -276,9 +274,9 @@ namespace assembly {
         u8 mod;
         u8 rm;
 
-        u8 scale;
-        u8 index;
-        u8 base;
+        u8 scale = 0xFF;
+        u8 index = 0xFF;
+        u8 base = 0xFF;
 
         // Fill in "mod" and "rm"
 
@@ -339,7 +337,7 @@ namespace assembly {
             base = reg_to_number(memory.base);
         }
 
-        assemble_memory_mnemo_result result;
+        assemble_memory_mnemo_result result{};
         result.mod = mod;
         result.rm = rm;
 
@@ -651,7 +649,7 @@ namespace assembly {
     }
 
     mnemo_t::arg_t mnemo_t::arg_t::reg(mnemo_t::arg_t::reg_t reg) {
-        arg_t o;
+        arg_t o{};
         o.tag = tag_t::Register;
         o.data.reg = reg;
         return o;
@@ -659,7 +657,7 @@ namespace assembly {
 
     mnemo_t::arg_t mnemo_t::arg_t::mem(mnemo_t::arg_t::reg_t base, mnemo_t::arg_t::reg_t index,
                                        mnemo_t::arg_t::memory_t::scale_t scale, i32 disp) {
-        arg_t o;
+        arg_t o{};
         o.tag = tag_t::Memory;
         o.data.memory = {
                 .base=base,

@@ -40,14 +40,13 @@ void flush_instruction_cache(void *mem, size_t size) {
 #include <Memoryapi.h>
 
 void *alloc_executable(size_t size) {
-    void *mem = VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-    if (mem == NULL)
+    void *mem = VirtualAlloc(nullptr, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    if (mem == nullptr)
         throw std::runtime_error("allocation failed");
     return mem;
 }
 
-void dealloc(void *mem, size_t size) {
-    size_t asize = size;
+void dealloc(void *mem, size_t) {
     BOOL b = VirtualFree(mem, 0, MEM_RELEASE);
     if (b == 0)
         throw std::runtime_error("deallocation failed");

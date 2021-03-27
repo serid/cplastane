@@ -23,7 +23,7 @@ namespace tests {
 
     // Test group of tests that output bytecode
     static auto run_bytecode_tests() -> test::TestGroupResult {
-        auto process = [](vector<mnemo_t> mnemos) -> vector<u8> {
+        auto process = [](const vector<mnemo_t>& mnemos) -> vector<u8> {
             return assembly::assemble(mnemos);
         };
         auto output_printer = [](const vector<u8> &vec) -> void {
@@ -253,7 +253,7 @@ namespace tests {
 
     // Test group of tests that execute bytecode
     static auto run_exec_tests() -> test::TestGroupResult {
-        auto process = [](vector<mnemo_t> mnemos) -> i64 {
+        auto process = [](const vector<mnemo_t>& mnemos) -> i64 {
             vector<u8> bytecode = assembly::assemble(mnemos);
             return jit::eval_mc(bytecode.data(), bytecode.size());
         };
