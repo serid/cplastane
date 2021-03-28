@@ -75,9 +75,9 @@ namespace test {
             return embed.run();
         }
 
-        BoolTest(string &&name, const function<bool()>& process) : embed(move(name), monostate(), true,
-                                                                       [=](monostate) -> bool { return process(); },
-                                                                       print_bool) {}
+        BoolTest(string &&name, const function<bool()> &process) : embed(move(name), monostate(), true,
+                                                                         [=](monostate) -> bool { return process(); },
+                                                                         print_bool) {}
     };
 
     using TestGroup = vector<const TestBase *>;
@@ -101,6 +101,6 @@ namespace test {
 
         cout << "\n";
         cout << "Testing complete (combined result) [" << combined_success_counter << " / "
-                  << combined_test_group_size << "].\n";
+             << combined_test_group_size << "].\n";
     }
 }
