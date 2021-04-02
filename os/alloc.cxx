@@ -37,7 +37,6 @@ void flush_instruction_cache(void *mem, size_t size) {
 
 #include <stdexcept>
 #include <Windows.h>
-#include <Memoryapi.h>
 
 void *alloc_executable(size_t size) {
     void *mem = VirtualAlloc(nullptr, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);

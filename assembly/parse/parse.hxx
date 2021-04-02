@@ -5,10 +5,8 @@
 
 using namespace std;
 
-namespace assembly {
-    namespace parse {
-        auto parse(string_view tail) -> vector<mnemo_t>;
+namespace assembly::parse {
+    auto parse(string_view tail) -> vector<mnemo_t>;
 
-        auto test() -> void;
-    }
+    auto test() -> void;
 }

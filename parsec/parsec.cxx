@@ -11,14 +11,13 @@ static auto is_digit(char c) -> bool {
 }
 
 namespace parsec {
-    auto skip_while_char(strive tail,
-                         function<bool(char)> predicate) -> ParserResult<monostate> {
+    auto skip_while_char(strive tail, const function<bool(char)> &predicate) -> ParserResult<monostate> {
         for (; !tail.empty() && predicate(tail[0]); tail = tail.substr(1));
         return ParserResult(tail, monostate());
     }
 
     auto
-    scan_while_char(strive tail, function<bool(char)> predicate) -> ParserResult<string> {
+    scan_while_char(strive tail, const function<bool(char)> &predicate) -> ParserResult<string> {
         string result{};
         for (; !tail.empty() && predicate(tail[0]); tail = tail.substr(1)) {
             result.push_back(tail[0]);

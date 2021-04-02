@@ -1,7 +1,5 @@
 #pragma once
 
-namespace parsec {
-    namespace tests {
-        auto test() -> void;
-    }
+namespace parsec::tests {
+    auto test() -> void;
 }

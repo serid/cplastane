@@ -25,11 +25,10 @@ namespace parsec {
     template<typename T>
     using OptionParserResult = Option<ParserResult<T>>;
 
-    auto skip_while_char(strive tail,
-                         function<bool(char)> predicate) -> ParserResult<monostate>;
+    auto skip_while_char(strive tail, const function<bool(char)> &predicate) -> ParserResult<monostate>;
 
     auto
-    scan_while_char(strive tail, function<bool(char)> predicate) -> ParserResult<string>;
+    scan_while_char(strive tail, const function<bool(char)> &predicate) -> ParserResult<string>;
 
     auto scan_char(strive tail) -> OptionParserResult<char>;
 
