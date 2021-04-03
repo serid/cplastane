@@ -12,15 +12,15 @@ static auto is_digit(char c) -> bool {
 
 namespace parsec {
     auto skip_while_char(strive tail, const function<bool(char)> &predicate) -> ParserResult<monostate> {
-        for (; !tail.empty() && predicate(tail[0]); tail = tail.substr(1));
+        for (; !tail.empty() && predicate(tail.front()); tail = tail.substr(1));
         return ParserResult(tail, monostate());
     }
 
     auto
     scan_while_char(strive tail, const function<bool(char)> &predicate) -> ParserResult<string> {
         string result{};
-        for (; !tail.empty() && predicate(tail[0]); tail = tail.substr(1)) {
-            result.push_back(tail[0]);
+        for (; !tail.empty() && predicate(tail.front()); tail = tail.substr(1)) {
+            result.push_back(tail.front());
         }
         return ParserResult<string>(tail, move(result));
     }
@@ -28,7 +28,7 @@ namespace parsec {
     auto scan_char(strive tail) -> OptionParserResult<char> {
         if (tail.empty())
             return OptionParserResult<char>();
-        return make_option(ParserResult(tail.substr(1), tail[0]));
+        return make_option(ParserResult(tail.substr(1), tail.front()));
     }
 
     auto parse_i64(strive tail) -> OptionParserResult<i64> {
@@ -41,19 +41,19 @@ namespace parsec {
         if (tail.empty())
             return OptionParserResult<i64>();
 
-        bool is_negative = tail[0] == '-';
+        bool is_negative = tail.front() == '-';
         if (is_negative)
             tail = tail.substr(1);
 
         // If there is no digit, return error
-        if (tail.empty() || !is_digit(tail[0]))
+        if (tail.empty() || !is_digit(tail.front()))
             return OptionParserResult<i64>();
 
         // Continues while first char in `tail` is a digit
         // Each iteration slices off one char
-        for (; !tail.empty() && is_digit(tail[0]); tail = tail.substr(1)) {
+        for (; !tail.empty() && is_digit(tail.front()); tail = tail.substr(1)) {
             result *= 10;
-            result += tail[0] - '0';
+            result += tail.front() - '0';
         }
 
         if (is_negative) {

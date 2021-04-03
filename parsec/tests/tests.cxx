@@ -40,7 +40,7 @@ namespace parsec::tests {
                                                                                return c == 'a';
                                                                            });
                             tail = res.tail;
-                            return string(tail);
+                            return tail.to_string();
                         },
                         print_string
                 ),
@@ -58,7 +58,7 @@ namespace parsec::tests {
                             tail = res.tail;
                             string scanned = res.data;
 
-                            return make_tuple(string(tail), scanned);
+                            return make_tuple(tail.to_string(), scanned);
                         },
                         print_tuple<string, string>
                 ),
@@ -68,7 +68,7 @@ namespace parsec::tests {
                             string s("aaabbbccc");
                             strive tail(s);
                             OptionParserResult<char> res = scan_char(tail);
-                            tail = string(res.value().tail);
+                            tail = res.value().tail.to_string();
                             char res_char = res.value().data;
                             return tail == "aabbbccc" && res_char == 'a';
                         }
