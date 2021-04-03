@@ -3,13 +3,10 @@
 #include <exception>
 #include <iostream>
 
-#include "../../parsec/parsec.hxx"
-
 // Parse assembly text using parser combinators
 
 using namespace std;
 using namespace assembly;
-using namespace parsec;
 
 using arg_t = mnemo_t::arg_t;
 using reg_t = arg_t::reg_t;
