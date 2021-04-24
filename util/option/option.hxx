@@ -13,7 +13,7 @@ public:
     template<class U>
     auto map(function<U(T)> f) -> Option<U> {
         if (this->has_value())
-            return Option(f(**this));
+            return Option(f(this->value()));
         return Option<U>();
     }
 
@@ -21,7 +21,7 @@ public:
     template<class U>
     auto bind(function<Option<U>(T)> k) -> Option<U> {
         if (this->has_value())
-            return k(**this);
+            return k(this->value());
         return Option<U>();
     }
 
