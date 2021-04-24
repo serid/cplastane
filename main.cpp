@@ -6,7 +6,7 @@
 #include "jit/jit.hxx"
 
 auto eval(strive s) -> i64 {
-    auto mnemos = assembly::parse::parse(s);
+    auto mnemos = assembly::parse::parse(s).value().data;
     auto bytes = assembly::assemble(mnemos);
     return jit::eval_mc(bytes.data(), bytes.size());
 }

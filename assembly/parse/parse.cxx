@@ -3,15 +3,18 @@
 #include <exception>
 #include <iostream>
 
+#include "../../util/result/result.hxx"
+
 // Parse assembly text using parser combinators
 
 using namespace std;
 using namespace assembly;
+using namespace assembly::parse;
 
 using arg_t = mnemo_t::arg_t;
 using reg_t = arg_t::reg_t;
 
-static auto parse_register(strive tail) -> OptionParserResult<reg_t> {
+static auto parse_register(strive tail) -> ParserResultResult<reg_t> {
     return OptionParserResult<reg_t>().choice([=]() {
         return consume_prefix_str(tail, "al", reg_t::Al);
     }).choice([=]() {
@@ -68,10 +71,10 @@ static auto parse_register(strive tail) -> OptionParserResult<reg_t> {
         return consume_prefix_str(tail, "rsi", reg_t::Rsi);
     }).choice([=]() {
         return consume_prefix_str(tail, "rdi", reg_t::Rdi);
-    });
+    }).unwrap_or(make_error(tail, "expected register"));
 }
 
-static auto parse_mnemo_name(strive tail) -> OptionParserResult<mnemo_t::tag_t> {
+static auto parse_mnemo_name(strive tail) -> ParserResultResult<mnemo_t::tag_t> {
     return consume_prefix_str(tail, "mov", mnemo_t::tag_t::Mov).choice([=]() {
         return consume_prefix_str(tail, "add", mnemo_t::tag_t::Add);
     }).choice([=]() {
@@ -80,10 +83,10 @@ static auto parse_mnemo_name(strive tail) -> OptionParserResult<mnemo_t::tag_t> 
         return consume_prefix_str(tail, "pop", mnemo_t::tag_t::Pop);
     }).choice([=]() {
         return consume_prefix_str(tail, "ret", mnemo_t::tag_t::Ret);
-    });
+    }).unwrap_or(make_error(tail, "expected mnemo name"));
 }
 
-static auto parse_mnemo_width(strive tail) -> OptionParserResult<mnemo_t::width_t> {
+static auto parse_mnemo_width(strive tail) -> ParserResultResult<mnemo_t::width_t> {
     return consume_prefix_str(tail, "BYTE", mnemo_t::width_t::Byte).choice([=]() {
         return consume_prefix_str(tail, "WORD", mnemo_t::width_t::Word);
     }).choice([=]() {
@@ -92,34 +95,37 @@ static auto parse_mnemo_width(strive tail) -> OptionParserResult<mnemo_t::width_
         return consume_prefix_str(tail, "QWORD", mnemo_t::width_t::Qword);
     }).choice([=]() {
         return consume_prefix_str(tail, "NotSet", mnemo_t::width_t::NotSet);
-    });
+    }).unwrap_or(make_error(tail, "expected instruction size"));
 }
 
-static auto parse_arg(strive tail) -> OptionParserResult<arg_t> {
+static auto parse_arg(strive tail) -> ParserResultResult<arg_t> {
     // Parses an arg from text assembly like
     // 100
     // eax
     // [eax * 2 + 100]
-
-    if (OptionParserResult<i64> a1 = parse_i64(tail)) {
-        return make_option(ParserResult(a1.value().tail, arg_t::imm(a1.value().data)));
-    } else if (OptionParserResult<reg_t> a2 = parse_register(tail)) {
-        return make_option(ParserResult(a2.value().tail, arg_t::reg(a2.value().data)));
-    } else if (OptionParserResult<monostate> a = consume_prefix_char(tail, '[', monostate())) {
-        if (OptionParserResult<reg_t> b = parse_register(a.value().tail)) {
+    //🗿
+    if (ParserResultResult<i64> a1 = parse_i64(tail).unwrap_or(make_error(tail, "expected int literal"))) {
+        return ParserResult(a1.value().tail, arg_t::imm(a1.value().data));
+    } else if (ParserResultResult<reg_t> a2 = parse_register(tail)) {
+        return ParserResult(a2.value().tail, arg_t::reg(a2.value().data));
+    } else if (ParserResultResult<monostate> a = consume_prefix_char(tail, '[', monostate())
+            .unwrap_or(make_error(tail, "expected a memory argument"))) {
+        if (ParserResultResult<reg_t> b = parse_register(a.value().tail)) {
             reg_t base = b.value().data;
 
             // Maybe parse an index with scale
             reg_t index = reg_t::Undef;
             arg_t::memory_t::scale_t scale = arg_t::memory_t::scale_t::S0;
-            if (OptionParserResult<monostate> c = consume_prefix_str(b.value().tail, " + ", monostate())) {
-                if (OptionParserResult<reg_t> d = parse_register(c.value().tail)) {
+            if (ParserResultResult<monostate> c = consume_prefix_str(b.value().tail, " + ", monostate())
+                    .unwrap_or(make_error(b.value().tail, "todo2"))) {
+                if (ParserResultResult<reg_t> d = parse_register(c.value().tail)) {
                     index = d.value().data;
                     b.value().tail = d.value().tail;
 
-                    if (OptionParserResult<monostate> e = consume_prefix_str(d.value().tail, " * ",
-                                                                             monostate())) {
-                        if (OptionParserResult<i64> f = parse_i64(e.value().tail)) {
+                    if (ParserResultResult<monostate> e = consume_prefix_str(d.value().tail, " * ", monostate())
+                            .unwrap_or(make_error(d.value().tail, "todo3"))) {
+                        if (ParserResultResult<i64> f = parse_i64(e.value().tail)
+                                .unwrap_or(make_error(e.value().tail, "expected int literal"))) {
                             switch (f.value().data) {
                                 case 0:
                                     scale = arg_t::memory_t::scale_t::S0;
@@ -147,33 +153,36 @@ static auto parse_arg(strive tail) -> OptionParserResult<arg_t> {
             }
 
             i32 disp = 0;
-            if (OptionParserResult<monostate> c = consume_prefix_str(b.value().tail, " + ", monostate())) {
-                if (OptionParserResult<i64> d = parse_i64(c.value().tail)) {
+            if (ParserResultResult<monostate> c = consume_prefix_str(b.value().tail, " + ", monostate())
+                    .unwrap_or(make_error(b.value().tail, "todo4"))) {
+                if (ParserResultResult<i64> d = parse_i64(c.value().tail)
+                        .unwrap_or(make_error(c.value().tail, "todo5"))) {
                     disp = i32(d.value().data);
                     b.value().tail = d.value().tail;
                 }
             }
 
-            if (OptionParserResult<monostate> c = consume_prefix_char(b.value().tail, ']', monostate())) {
+            if (ParserResultResult<monostate> c = consume_prefix_char(b.value().tail, ']', monostate())
+                    .unwrap_or(make_error(b.value().tail, "expected '['"))) {
                 arg_t result = arg_t::mem(base, index, scale, disp);
-                return make_option(ParserResult(c.value().tail, result));
+                return ParserResult(c.value().tail, result);
             } else {
-                return OptionParserResult<arg_t>();
+                return c.copy_error();
             }
         } else {
-            return OptionParserResult<arg_t>();
+            return b.copy_error();
         }
     } else {
-        return OptionParserResult<arg_t>();
+        return a.copy_error();
     }
 }
 
-static auto parse_line(strive tail) -> OptionParserResult<mnemo_t> {
+static auto parse_line(strive tail) -> ParserResultResult<mnemo_t> {
     // Parses a line from text assembly like
     // mov eax, 100
 
     // Parse mnemo tag
-    if (OptionParserResult<mnemo_t::tag_t> a = parse_mnemo_name(tail)) {
+    if (ParserResultResult<mnemo_t::tag_t> a = parse_mnemo_name(tail)) {
         mnemo_t::tag_t tag = a.value().data;
 
         // Skip spaces
@@ -181,7 +190,7 @@ static auto parse_line(strive tail) -> OptionParserResult<mnemo_t> {
 
         mnemo_t::width_t width = mnemo_t::width_t::NotSet;
         // Parse mnemo width
-        if (OptionParserResult<mnemo_t::width_t> c = parse_mnemo_width(b.tail)) {
+        if (ParserResultResult<mnemo_t::width_t> c = parse_mnemo_width(b.tail)) {
             width = c.value().data;
             b.tail = c.value().tail;
         }
@@ -192,22 +201,26 @@ static auto parse_line(strive tail) -> OptionParserResult<mnemo_t> {
         arg_t arg1{};
         arg_t arg2{};
         // Maybe parse arg1
-        if (OptionParserResult<mnemo_t::arg_t> d = parse_arg(c.tail)) {
+        if (ParserResultResult<mnemo_t::arg_t> d = parse_arg(c.tail)) {
             arg1 = d.value().data;
             c.tail = d.value().tail;
 
             // Skip ", "
-            if (OptionParserResult<monostate> e = consume_prefix_str(d.value().tail, ", ", monostate())) {
+            if (ParserResultResult<monostate> e = consume_prefix_str(d.value().tail, ", ", monostate())
+                    .unwrap_or(make_error(d.value().tail, "expected ', '"))) {
                 // Maybe parse arg2
-                if (OptionParserResult<mnemo_t::arg_t> f = parse_arg(e.value().tail)) {
+                if (ParserResultResult<mnemo_t::arg_t> f = parse_arg(e.value().tail)) {
                     arg2 = f.value().data;
                     c.tail = f.value().tail;
+                } else {
+                    return f.copy_error();
                 }
             }
         }
 
         // Consume a newline
-        if (OptionParserResult<monostate> d = consume_prefix_char(c.tail, '\n', monostate())) {
+        if (ParserResultResult<monostate> d = consume_prefix_char(c.tail, '\n', monostate())
+                .unwrap_or(make_error(c.tail, "expected a newline"))) {
             mnemo_t mnemo = {
                     .tag = tag,
                     .width = width,
@@ -215,33 +228,32 @@ static auto parse_line(strive tail) -> OptionParserResult<mnemo_t> {
                     .a2 = arg2,
             };
 
-            return make_option(ParserResult(d.value().tail, mnemo));
+            return ParserResult(d.value().tail, mnemo);
         } else {
-            throw logic_error("Uh oh");
+            return d.copy_error();
         }
     } else {
-        return OptionParserResult<mnemo_t>();
+        return a.copy_error();
     }
 }
 
 namespace assembly::parse {
-    auto parse(strive tail) -> vector<mnemo_t> {
+    auto parse(strive tail) -> ParserResultResult<vector<mnemo_t>> {
         // Parses multiline assembly text
 
         vector<mnemo_t> result{};
 
-        for (;;) {
-            if (OptionParserResult<mnemo_t> result1 = parse_line(tail)) {
+        for (; !tail.empty();) {
+            if (ParserResultResult<mnemo_t> result1 = parse_line(tail)) {
                 // If result is available, continue iteration
                 tail = result1.value().tail;
                 result.push_back(result1.value().data);
             } else {
-                // Else break
-                break;
+                return result1.copy_error();
             }
         }
 
-        return result;
+        return ParserResult(tail, result);
     }
 
     auto test() -> void {
@@ -249,7 +261,7 @@ namespace assembly::parse {
                    "mov BYTE ah, [eax + ebx * 2 + 128]\n"
                    "push DWORD [eax]\n"
                    "ret\n";
-        auto mnemos = assembly::parse::parse(s);
+        auto mnemos = assembly::parse::parse(s).value().data;
 
         for (auto &mnemo : mnemos) {
             mnemo.print();
