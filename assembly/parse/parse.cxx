@@ -1,6 +1,5 @@
 #include "parse.hxx"
 
-#include <exception>
 #include <iostream>
 
 #include "../../util/result/result.hxx"
@@ -8,6 +7,7 @@
 // Parse assembly text using parser combinators
 
 using namespace std;
+using namespace parsec;
 using namespace assembly;
 using namespace assembly::parse;
 

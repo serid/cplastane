@@ -10,8 +10,6 @@
 #include "../strvec.hxx"
 #include "../util/option/option.hxx"
 
-using namespace std;
-
 namespace parsec {
     // Cannot use std::string_view since we need "start" field for providing error messages later.
     class strive {
@@ -74,10 +72,10 @@ namespace parsec {
     template<typename T>
     using OptionParserResult = Option<ParserResult<T>>;
 
-    auto skip_while_char(strive tail, const function<bool(char)> &predicate) -> ParserResult<monostate>;
+    auto skip_while_char(strive tail, const std::function<bool(char)> &predicate) -> ParserResult<std::monostate>;
 
     auto
-    scan_while_char(strive tail, const function<bool(char)> &predicate) -> ParserResult<string>;
+    scan_while_char(strive tail, const std::function<bool(char)> &predicate) -> ParserResult<string>;
 
     auto scan_char(strive tail) -> OptionParserResult<char>;
 

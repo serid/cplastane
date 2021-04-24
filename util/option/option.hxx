@@ -5,13 +5,11 @@
 
 #include "../result/result.hxx"
 
-using namespace std;
-
 template<typename T>
-class Option : public optional<T> {
+class Option : public std::optional<T> {
 public:
     template<class U>
-    auto map(function<U(T)> f) -> Option<U> {
+    auto map(std::function<U(T)> f) -> Option<U> {
         if (this->has_value())
             return Option(f(this->value()));
         return Option<U>();
@@ -19,14 +17,14 @@ public:
 
     // Haskell Monad.>>=, Rust Option::and_then()
     template<class U>
-    auto bind(function<Option<U>(T)> k) -> Option<U> {
+    auto bind(std::function<Option<U>(T)> k) -> Option<U> {
         if (this->has_value())
             return k(this->value());
         return Option<U>();
     }
 
     // Haskell Monad.<|>, Rust Option::or_else()
-    auto choice(function<Option<T>()> k) -> Option<T> {
+    auto choice(std::function<Option<T>()> k) -> Option<T> {
         if (this->has_value())
             return *this;
         return k();
@@ -36,9 +34,9 @@ public:
     template<typename E>
     auto unwrap_or(E &&error) && -> Result<T, E> {
         if (this->has_value())
-            return make_ok<T, E>(move(this->value()));
+            return make_ok<T, E>(std::move(this->value()));
         else
-            return make_err<T, E>(forward<E>(error));
+            return make_err<T, E>(std::forward<E>(error));
     }
 
     /*
@@ -96,13 +94,13 @@ public:
     // End Constructor (8)
     */
 
-    constexpr Option() noexcept: optional<T>() {}
+    constexpr Option() noexcept: std::optional<T>() {}
 
     template<typename U = T>
-    explicit constexpr Option(U &&value) : optional<T>(forward<U>(value)) {};
+    explicit constexpr Option(U &&value) : std::optional<T>(std::forward<U>(value)) {};
 };
 
 template<typename T>
-constexpr auto make_option(T &&v) -> Option<decay_t<T>> {
-    return Option<decay_t<T>>{forward<T>(v)};
+constexpr auto make_option(T &&v) -> Option<std::decay_t<T>> {
+    return Option<std::decay_t<T>>{std::forward<T>(v)};
 }
