@@ -101,76 +101,71 @@ static auto parse_arg(strive tail) -> OptionParserResult<arg_t> {
     // eax
     // [eax * 2 + 100]
 
-    return parse_i64(tail).bind<ParserResult<arg_t>>([](ParserResult<i64> a) {
-        return make_option(ParserResult(a.tail, arg_t::imm(a.data)));
-    }).choice([tail]() {
-        return parse_register(tail).bind<ParserResult<arg_t>>([](ParserResult<reg_t> a) {
-            return make_option(ParserResult(a.tail, arg_t::reg(a.data)));
-        });
-    }).choice([tail]() {
-        // Parse a memory operand
-        if (OptionParserResult<monostate> a = consume_prefix_char(tail, '[', monostate())) {
-            if (OptionParserResult<reg_t> b = parse_register(a.value().tail)) {
-                reg_t base = b.value().data;
+    if (OptionParserResult<i64> a1 = parse_i64(tail)) {
+        return make_option(ParserResult(a1.value().tail, arg_t::imm(a1.value().data)));
+    } else if (OptionParserResult<reg_t> a2 = parse_register(tail)) {
+        return make_option(ParserResult(a2.value().tail, arg_t::reg(a2.value().data)));
+    } else if (OptionParserResult<monostate> a = consume_prefix_char(tail, '[', monostate())) {
+        if (OptionParserResult<reg_t> b = parse_register(a.value().tail)) {
+            reg_t base = b.value().data;
 
-                // Maybe parse an index with scale
-                reg_t index = reg_t::Undef;
-                arg_t::memory_t::scale_t scale = arg_t::memory_t::scale_t::S0;
-                if (OptionParserResult<monostate> c = consume_prefix_str(b.value().tail, " + ", monostate())) {
-                    if (OptionParserResult<reg_t> d = parse_register(c.value().tail)) {
-                        index = d.value().data;
-                        b.value().tail = d.value().tail;
+            // Maybe parse an index with scale
+            reg_t index = reg_t::Undef;
+            arg_t::memory_t::scale_t scale = arg_t::memory_t::scale_t::S0;
+            if (OptionParserResult<monostate> c = consume_prefix_str(b.value().tail, " + ", monostate())) {
+                if (OptionParserResult<reg_t> d = parse_register(c.value().tail)) {
+                    index = d.value().data;
+                    b.value().tail = d.value().tail;
 
-                        if (OptionParserResult<monostate> e = consume_prefix_str(d.value().tail, " * ",
-                                                                                 monostate())) {
-                            if (OptionParserResult<i64> f = parse_i64(e.value().tail)) {
-                                switch (f.value().data) {
-                                    case 0:
-                                        scale = arg_t::memory_t::scale_t::S0;
-                                        break;
-                                    case 1:
-                                        scale = arg_t::memory_t::scale_t::S1;
-                                        break;
-                                    case 2:
-                                        scale = arg_t::memory_t::scale_t::S2;
-                                        break;
-                                    case 4:
-                                        scale = arg_t::memory_t::scale_t::S4;
-                                        break;
-                                    case 8:
-                                        scale = arg_t::memory_t::scale_t::S8;
-                                        break;
-                                    default:
-                                        throw logic_error("scale should be one of: 0 1 2 4 8");
-                                }
-
-                                b.value().tail = f.value().tail;
+                    if (OptionParserResult<monostate> e = consume_prefix_str(d.value().tail, " * ",
+                                                                             monostate())) {
+                        if (OptionParserResult<i64> f = parse_i64(e.value().tail)) {
+                            switch (f.value().data) {
+                                case 0:
+                                    scale = arg_t::memory_t::scale_t::S0;
+                                    break;
+                                case 1:
+                                    scale = arg_t::memory_t::scale_t::S1;
+                                    break;
+                                case 2:
+                                    scale = arg_t::memory_t::scale_t::S2;
+                                    break;
+                                case 4:
+                                    scale = arg_t::memory_t::scale_t::S4;
+                                    break;
+                                case 8:
+                                    scale = arg_t::memory_t::scale_t::S8;
+                                    break;
+                                default:
+                                    throw logic_error("scale should be one of: 0 1 2 4 8");
                             }
+
+                            b.value().tail = f.value().tail;
                         }
                     }
                 }
+            }
 
-                i32 disp = 0;
-                if (OptionParserResult<monostate> c = consume_prefix_str(b.value().tail, " + ", monostate())) {
-                    if (OptionParserResult<i64> d = parse_i64(c.value().tail)) {
-                        disp = i32(d.value().data);
-                        b.value().tail = d.value().tail;
-                    }
+            i32 disp = 0;
+            if (OptionParserResult<monostate> c = consume_prefix_str(b.value().tail, " + ", monostate())) {
+                if (OptionParserResult<i64> d = parse_i64(c.value().tail)) {
+                    disp = i32(d.value().data);
+                    b.value().tail = d.value().tail;
                 }
+            }
 
-                if (OptionParserResult<monostate> c = consume_prefix_char(b.value().tail, ']', monostate())) {
-                    arg_t result = arg_t::mem(base, index, scale, disp);
-                    return make_option(ParserResult(c.value().tail, result));
-                } else {
-                    return OptionParserResult<arg_t>();
-                }
+            if (OptionParserResult<monostate> c = consume_prefix_char(b.value().tail, ']', monostate())) {
+                arg_t result = arg_t::mem(base, index, scale, disp);
+                return make_option(ParserResult(c.value().tail, result));
             } else {
                 return OptionParserResult<arg_t>();
             }
         } else {
             return OptionParserResult<arg_t>();
         }
-    });
+    } else {
+        return OptionParserResult<arg_t>();
+    }
 }
 
 static auto parse_line(strive tail) -> OptionParserResult<mnemo_t> {
