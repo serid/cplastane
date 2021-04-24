@@ -23,9 +23,6 @@ namespace parsec::tests {
             print_tuple(*opt);
     }
 
-    template<typename T>
-    using owning_OptionParserResult = Option<tuple<string, T>>;
-
     auto test() -> void {
         test::TestGroup tests = {
                 new test::Test<monostate, string>(
@@ -169,5 +166,9 @@ namespace parsec::tests {
         };
 
         test::log_run_test_group(tests);
+
+        for (auto &test : tests) {
+            delete test;
+        }
     }
 }

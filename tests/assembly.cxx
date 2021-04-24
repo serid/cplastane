@@ -563,7 +563,13 @@ namespace tests {
                 }, u64_to_i64(0xffffffff8f8f8f00), process, output_printer),
         };
 
-        return test::run_test_group(tests);
+        auto results = test::run_test_group(tests);
+
+        for (auto &test : tests) {
+            delete test;
+        }
+
+        return results;
     }
 
     auto test_assembly() -> void {
