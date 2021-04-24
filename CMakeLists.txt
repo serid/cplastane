@@ -26,6 +26,7 @@ add_executable(cplastane
         test/test.cxx
         parsec/tests/tests.cxx
         parsec/tests/tests.hxx
+        util/result/result.hxx
         )
 
 target_compile_options(cplastane PUBLIC -Wall -Wextra -Werror -Wno-missing-field-initializers -Wno-unused-variable -Wno-unused-function)

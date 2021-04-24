@@ -3,6 +3,8 @@
 #include <optional>
 #include <functional>
 
+#include "../result/result.hxx"
+
 using namespace std;
 
 template<typename T>
@@ -28,6 +30,15 @@ public:
         if (this->has_value())
             return *this;
         return k();
+    }
+
+    // Rust Option::unwrap_or()
+    template<typename E>
+    auto unwrap_or(E &&error) && -> Result<T, E> {
+        if (this->has_value())
+            return make_ok<T, E>(move(this->value()));
+        else
+            return make_err<T, E>(forward<E>(error));
     }
 
     /*
