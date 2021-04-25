@@ -81,20 +81,7 @@ namespace parsec {
 
     auto parse_i64(strive tail) -> OptionParserResult<i64>;
 
-    template<typename T>
-    auto consume_prefix_char(strive tail, char prefix, T on_success) -> OptionParserResult<T> {
-        if (OptionParserResult<char> result1 = scan_char(tail)) {
-            tail = result1.value().tail;
-            char c = result1.value().data;
-            if (c == prefix) {
-                return make_option(ParserResult(tail, on_success));
-            } else {
-                return OptionParserResult<T>();
-            }
-        } else {
-            return OptionParserResult<T>();
-        }
-    }
+    auto consume_prefix_char(strive tail, char prefix) -> OptionParserResult<std::monostate>;
 
     template<typename T>
     auto consume_prefix_str(strive tail, strive prefix, T on_success) -> OptionParserResult<T> {

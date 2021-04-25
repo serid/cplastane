@@ -118,4 +118,18 @@ namespace parsec {
             return OptionParserResult<i64>();
         }
     }
+
+    auto consume_prefix_char(strive tail, char prefix) -> OptionParserResult<monostate> {
+        if (OptionParserResult<char> result1 = scan_char(tail)) {
+            tail = result1.value().tail;
+            char c = result1.value().data;
+            if (c == prefix) {
+                return make_option(ParserResult(tail, monostate()));
+            } else {
+                return OptionParserResult<monostate>();
+            }
+        } else {
+            return OptionParserResult<monostate>();
+        }
+    }
 }

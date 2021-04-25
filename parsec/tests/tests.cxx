@@ -98,10 +98,9 @@ namespace parsec::tests {
                         []() -> bool {
                             string s("aabb");
                             strive tail(s);
-                            if (OptionParserResult < int > res = consume_prefix_char(tail, 'a', 23)) {
+                            if (OptionParserResult <monostate> res = consume_prefix_char(tail, 'a')) {
                                 tail = res.value().tail;
-                                int success = res.value().data;
-                                return tail == "abb" && success == 23;
+                                return tail == "abb";
                             }
                             return false;
                         }
@@ -111,7 +110,7 @@ namespace parsec::tests {
                         []() -> bool {
                             string s("bb");
                             strive tail(s);
-                            OptionParserResult<int> res = consume_prefix_char(tail, 'a', 23);
+                            OptionParserResult<monostate> res = consume_prefix_char(tail, 'a');
                             return !res.has_value();
                         }
                 ),
@@ -120,7 +119,7 @@ namespace parsec::tests {
                         []() -> bool {
                             string s("bb");
                             strive tail(s);
-                            OptionParserResult<int> res = consume_prefix_char(tail, 'a', 23);
+                            OptionParserResult<monostate> res = consume_prefix_char(tail, 'a');
                             return !res.has_value();
                         }
                 ),

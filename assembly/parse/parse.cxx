@@ -112,7 +112,7 @@ static auto parse_arg(strive tail) -> ParserResultResult<arg_t> {
         return ParserResult(a1.value().tail, arg_t::imm(a1.value().data));
     } else if (ParserResultResult<reg_t> a2 = parse_register(tail)) {
         return ParserResult(a2.value().tail, arg_t::reg(a2.value().data));
-    } else if (ParserResultResult<monostate> a = consume_prefix_char(tail, '[', monostate())
+    } else if (ParserResultResult<monostate> a = consume_prefix_char(tail, '[')
             .unwrap_or(make_error(tail, "expected a memory argument"))) {
         if (ParserResultResult<reg_t> b = parse_register(a.value().tail)) {
             reg_t base = b.value().data;
@@ -166,7 +166,7 @@ static auto parse_arg(strive tail) -> ParserResultResult<arg_t> {
                 }
             }
 
-            if (ParserResultResult<monostate> c = consume_prefix_char(b.value().tail, ']', monostate())
+            if (ParserResultResult<monostate> c = consume_prefix_char(b.value().tail, ']')
                     .unwrap_or(make_error(b.value().tail, "expected '['"))) {
                 arg_t result = arg_t::mem(base, index, scale, disp);
                 return ParserResult(c.value().tail, result);
@@ -223,7 +223,7 @@ static auto parse_line(strive tail) -> ParserResultResult<mnemo_t> {
         }
 
         // Consume a newline
-        if (ParserResultResult<monostate> d = consume_prefix_char(c.tail, '\n', monostate())
+        if (ParserResultResult<monostate> d = consume_prefix_char(c.tail, '\n')
                 .unwrap_or(make_error(c.tail, "expected a newline"))) {
             mnemo_t mnemo = {
                     .tag = tag,
