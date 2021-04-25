@@ -56,6 +56,14 @@ static auto parse_register(strive tail) -> ParserResultResult<reg_t> {
     }).choice([=]() {
         return consume_prefix_str(tail, "edx", reg_t::Edx);
     }).choice([=]() {
+        return consume_prefix_str(tail, "esp", reg_t::Esp);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "ebp", reg_t::Ebp);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "esi", reg_t::Esi);
+    }).choice([=]() {
+        return consume_prefix_str(tail, "edi", reg_t::Edi);
+    }).choice([=]() {
         return consume_prefix_str(tail, "rax", reg_t::Rax);
     }).choice([=]() {
         return consume_prefix_str(tail, "rbx", reg_t::Rbx);
