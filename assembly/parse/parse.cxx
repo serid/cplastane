@@ -163,12 +163,12 @@ static auto parse_arg(strive tail) -> ParserResultResult<arg_t> {
                 }
             }
 
-            i32 disp = 0;
+            disp_t disp = 0;
             if (ParserResultResult<monostate> c = consume_prefix_str(b.value().tail, " + ", monostate())
                     .unwrap_or(make_error(b.value().tail, "todo4"))) {
                 if (ParserResultResult<i64> d = parse_i64(c.value().tail)
                         .unwrap_or(make_error(c.value().tail, "todo5"))) {
-                    disp = i32(d.value().data);
+                    disp = disp_t(d.value().data);
                     b.value().tail = d.value().tail;
                 }
             }

@@ -137,7 +137,7 @@ static auto scale_and_index_and_base_to_sib(u8 scale, u8 index, u8 base) -> u8 {
 }
 
 // For mnemos that only allow imms up to 32 bits. 32 bit value will be sign-extended in memory to 64 bits
-static auto assert_imm_not_larger_than_32_bits(mnemo_t::width_t &width, i64 imm, const string &msg) -> void {
+static auto assert_imm_not_larger_than_32_bits(mnemo_t::width_t &width, imm_t imm, const string &msg) -> void {
     if (width == mnemo_t::width_t::Qword) {
         width = mnemo_t::width_t::Dword;
         if (!can_be_encoded_in_32bits(imm))
@@ -174,7 +174,7 @@ static auto push_rex_if_qword(vector<u8> &out, mnemo_t::width_t width) -> void {
     }
 }
 
-static auto append_disp(vector<u8> &out, i32 a_disp) -> void {
+static auto append_disp(vector<u8> &out, disp_t a_disp) -> void {
     // Append the disp
     if (a_disp == 0) {
         // no disp
@@ -194,7 +194,7 @@ static auto append_disp(vector<u8> &out, i32 a_disp) -> void {
     }
 }
 
-static auto append_imm_upto_64(vector<u8> &out, mnemo_t::width_t width, i64 a_imm) -> void {
+static auto append_imm_upto_64(vector<u8> &out, mnemo_t::width_t width, imm_t a_imm) -> void {
     switch (width) {
         case mnemo_t::width_t::Byte: {
             // Write i8
@@ -635,7 +635,7 @@ namespace assembly {
         return result;
     }
 
-    mnemo_t::arg_t mnemo_t::arg_t::imm(i64 imm) {
+    mnemo_t::arg_t mnemo_t::arg_t::imm(imm_t imm) {
         return {
                 .tag=tag_t::Immediate,
                 .data {.imm = imm},
@@ -650,7 +650,7 @@ namespace assembly {
     }
 
     mnemo_t::arg_t mnemo_t::arg_t::mem(mnemo_t::arg_t::reg_t base, mnemo_t::arg_t::reg_t index,
-                                       mnemo_t::arg_t::memory_t::scale_t scale, i32 disp) {
+                                       mnemo_t::arg_t::memory_t::scale_t scale, disp_t disp) {
         // If scale is S0, the index register should be Undef
         if (scale == mnemo_t::arg_t::memory_t::scale_t::S0 && index != mnemo_t::arg_t::reg_t::Undef)
             throw logic_error("if scale is S0, the index register should be Undef");

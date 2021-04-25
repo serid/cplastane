@@ -45,7 +45,7 @@ namespace parsec {
     }
 
     // Assumes that base is 10 or 16
-    template<i8 base>
+    template<u8 base>
     auto parse_positive_i64(strive tail) -> OptionParserResult<i64> {
         // Parses an i64 like
         // 100
@@ -96,7 +96,7 @@ namespace parsec {
             tail = tail.substr(1);
         }
 
-        i8 base = 10;
+        u8 base = 10;
         if (tail.get_size() >= 2 && tail[0] == '0' && tail[1] == 'x') {
             base = 16;
             tail = tail.substr(2);

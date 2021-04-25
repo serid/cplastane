@@ -4,6 +4,9 @@
 #include "../int.hxx"
 
 namespace assembly {
+    typedef i32 disp_t;
+    typedef i64 imm_t;
+
     struct mnemo_t {
         struct arg_t {
             enum class reg_t {
@@ -53,7 +56,8 @@ namespace assembly {
                     S4,
                     S8,
                 } scale;
-                i32 disp;
+
+                disp_t disp;
             };
 
             enum class tag_t {
@@ -63,16 +67,16 @@ namespace assembly {
                 Memory,
             } tag;
             union {
-                i64 imm;
+                imm_t imm;
                 reg_t reg;
                 memory_t memory;
             } data;
 
-            static arg_t imm(i64 imm);
+            static arg_t imm(imm_t imm);
 
             static arg_t reg(reg_t reg);
 
-            static arg_t mem(reg_t base, reg_t index, memory_t::scale_t scale, i32 disp);
+            static arg_t mem(reg_t base, reg_t index, memory_t::scale_t scale, disp_t disp);
 
             auto print() const -> void;
 
