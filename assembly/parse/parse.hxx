@@ -14,13 +14,6 @@ namespace assembly::parse {
         parsec::strive where;
     };
 
-    static auto make_error(parsec::strive s, const char *what) -> ParserError {
-        return {
-                .what=what,
-                .where=s,
-        };
-    }
-
     template<typename T>
     using ParserResultResult = Result<parsec::ParserResult<T>, ParserError>;
 

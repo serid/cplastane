@@ -10,6 +10,13 @@ using namespace assembly::parse;
 using arg_t = mnemo_t::arg_t;
 using reg_t = arg_t::reg_t;
 
+static auto make_error(parsec::strive s, const char *what) -> ParserError {
+    return {
+            .what=what,
+            .where=s,
+    };
+}
+
 static auto parse_register(strive tail) -> ParserResultResult<reg_t> {
     return OptionParserResult<reg_t>().choice([=]() {
         return consume_prefix_str(tail, "al", reg_t::Al);

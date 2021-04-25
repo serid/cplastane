@@ -108,7 +108,5 @@ namespace assembly {
         auto static print_width(width_t width) -> void;
     };
 
-    auto assemble_mnemo(vector<u8> &out, const mnemo_t &mnemo) -> void;
-
     auto assemble(const vector<mnemo_t> &mnemos) -> vector<u8>;
 }

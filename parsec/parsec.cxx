@@ -30,8 +30,7 @@ namespace parsec {
         return ParserResult(tail, monostate());
     }
 
-    auto
-    scan_while_char(strive tail, const function<bool(char)> &predicate) -> ParserResult<string> {
+    auto scan_while_char(strive tail, const function<bool(char)> &predicate) -> ParserResult<string> {
         string result{};
         for (; !tail.empty() && predicate(tail.front()); tail = tail.substr(1)) {
             result.push_back(tail.front());
