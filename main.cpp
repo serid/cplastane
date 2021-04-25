@@ -13,8 +13,8 @@ auto eval(parsec::strive s) -> i64 {
 
 int main() {
 //    syntax::parse::test_parser();
-//    tests::test_assembly();
-    parsec::tests::test();
+    tests::test_assembly();
+    //parsec::tests::test();
 
-    assembly::parse::test();
+    //assembly::parse::test();
 }
