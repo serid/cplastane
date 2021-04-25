@@ -1,9 +1,5 @@
 #include "parse.hxx"
 
-#include <iostream>
-
-#include "../../util/result/result.hxx"
-
 // Parse assembly text using parser combinators
 
 using namespace std;

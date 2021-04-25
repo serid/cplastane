@@ -6,18 +6,18 @@
 template<typename T, typename E>
 class Result : std::variant<T, E> {
 public:
-    auto is_ok() const -> bool {
+    [[nodiscard]] auto is_ok() const -> bool {
         return this->index() == 0;
     }
 
-    auto is_err() const -> bool {
+    [[nodiscard]] auto is_err() const -> bool {
         return this->index() != 0;
     }
 
     template<class U>
     auto map(std::function<U(T)> f) const -> Result<U, E> {
         if (this->is_ok())
-            return Result(f(this->value()));
+            return Result(f(this->copy_value()));
         return *this;
     }
 
@@ -25,7 +25,7 @@ public:
     template<class U>
     auto bind(std::function<Result<U, E>(T)> k) const -> Result<U, E> {
         if (this->is_ok())
-            return k(this->value());
+            return k(this->copy_value());
         return *this;
     }
 
@@ -36,13 +36,13 @@ public:
         return k();
     }
 
-    auto value() -> T& {
+    auto value() -> T & {
         if (this->is_ok())
             return std::get<0>(*this);
         throw std::logic_error("called unwrap on an Error value");
     }
 
-    auto error() -> E& {
+    auto error() -> E & {
         if (this->is_err())
             return std::get<1>(*this);
         throw std::logic_error("called unwrap_err on an Ok value");
@@ -60,9 +60,9 @@ public:
         throw std::logic_error("called unwrap_err on an Ok value");
     }
 
-    constexpr Result(T&& t) : std::variant<T, E>(std::forward<T>(t)) {};
+    constexpr Result(T &&t) : std::variant<T, E>(std::forward<T>(t)) {};
 
-    constexpr Result(E&& e) : std::variant<T, E>(std::forward<E>(e)) {};
+    constexpr Result(E &&e) : std::variant<T, E>(std::forward<E>(e)) {};
 
     operator bool() const {
         return this->is_ok();

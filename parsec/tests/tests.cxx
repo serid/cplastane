@@ -17,12 +17,6 @@ namespace parsec::tests {
         cout << '(' << get<0>(tuple) << ", " << get<1>(tuple) << ')';
     }
 
-    template<typename A, typename B>
-    auto print_option_tuple(const Option<tuple<A, B>> &opt) -> void {
-        if (opt.has_value())
-            print_tuple(*opt);
-    }
-
     auto test() -> void {
         test::TestGroup tests = {
                 new test::Test<monostate, string>(
@@ -85,9 +79,7 @@ namespace parsec::tests {
                             string s("-100aaa");
                             strive tail(s);
                             if (OptionParserResult < i64 > res = parse_i64(tail)) {
-                                tail = res.value().tail;
-                                int scanned = res.value().data;
-                                return tail == "aaa" && scanned == -100;
+                                return res.value().tail == "aaa" && res.value().data == -100;
                             }
                             return false;
                         }

@@ -3,9 +3,11 @@
 CPlastane, is a cool C compiler designed with standard compatibility in mind.
 
 Implemented features:
+
 * x86/64 assembler (no linker yet)
 
 Planned features:
+
 * C parser
 * LLVM frontend, middleend, backend
 
